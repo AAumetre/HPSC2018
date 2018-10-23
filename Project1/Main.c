@@ -19,10 +19,6 @@
 	//======================= PRE-PROCESSING ===========================//
 	//Reads the content of the image file and stores it in an array
 
-	int compare (const void * a, const void * b) {
-   		return ( *(int*)a - *(int*)b );
-	}
-
 	int main(int argc, char **argv){
 	
 	printf("Usage: ./Main <file_name.ppm> <(int)Filter_size> <(int)Filter_level>\n-----------------\n");
@@ -31,9 +27,7 @@
 	int Fs = atoi(argv[2]);
 	int Fl = atoi(argv[3]);
 
-	printf("File: %s\n", filename);
-	printf("Fs: %d\n", Fs);
-	printf("Fl: %d\n", Fl);
+	printf("File: %s\nFs: %d\nFl: %d\n", filename, Fs, Fl);
 
 	int depth = 0, width = 0, height = 0;
 	long fileLength = 0;
@@ -48,59 +42,61 @@
 
 	//Read the next parameters as one string
 	char c, str[40];
-	int j=0; // CHANGE THIS VARIABLE'S NAME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	int cursor=0;
 	for (int i=0; i< 4; ++i){
 			c = fgetc(pFile);
 		while ((c != '\n') && (c != '\r')&&(c != '\0') && (c != ' ')){
-			str[j] = c;
+			str[cursor] = c;
 			c = fgetc(pFile);
-			++j;
+			++cursor;
 		} 
-		str[j] = ' ';
-		++j;
+		str[cursor] = ' ';
+		++cursor;
 	}
-	str[j+1] = '\0';
+	str[cursor+1] = '\0';
 
 	//Separates the strings and assign values
 	char s_width[8], s_height[8], s_depth[4], s_magic[3];
-	j = 0;
+	cursor = 0;
 	int rep = 0;
 
-	//Make a fucking loop !!
-	while ((str[j] != ' ') && (str[j] != '\r') && (str[j] != '\0') && (str[j] != '\n')){
-		s_magic[j-rep] = str[j];
-		++j;
+	//Reads out the .ppm meta-data
+	//String that should contain P6
+	while ((str[cursor] != ' ') && (str[cursor] != '\r') && (str[cursor] != '\0') && (str[cursor] != '\n')){
+		s_magic[cursor-rep] = str[cursor];
+		++cursor;
 	}
-	s_magic[j-rep] = '\0';
+	s_magic[cursor-rep] = '\0';
 	if ((s_magic[0] != 'P') || (s_magic[1] != '6')){
 		printf("Wrong file format. Aborting ...\n");
 		exit(0);
 	}
-	++j;
-	rep = j;
-
-	while ((str[j] != ' ') && (str[j] != '\r') && (str[j] != '\0') && (str[j] != '\n')) {
-		s_width[j-rep] = str[j];
-		++j;
+	++cursor;
+	rep = cursor;
+	//String that contains the width
+	while ((str[cursor] != ' ') && (str[cursor] != '\r') && (str[cursor] != '\0') && (str[cursor] != '\n')) {
+		s_width[cursor-rep] = str[cursor];
+		++cursor;
 	}
-	s_width[j] = '\0';
+	s_width[cursor] = '\0';
 	width = atoi(s_width);
-	++j;
-	rep = j;
-	while ((str[j] != ' ') && (str[j] != '\r') && (str[j] != '\0') && (str[j] != '\n')){
-		s_height[j-rep] = str[j];
-		++j;
+	++cursor;
+	rep = cursor;
+	//String that contains the height
+	while ((str[cursor] != ' ') && (str[cursor] != '\r') && (str[cursor] != '\0') && (str[cursor] != '\n')){
+		s_height[cursor-rep] = str[cursor];
+		++cursor;
 	}
-	s_height[j-rep] = '\0';
+	s_height[cursor-rep] = '\0';
 	height = atoi(s_height);
-	++j;
-	rep = j;
-
-	while ((str[j] != ' ') && (str[j] != '\r') && (str[j] != '\0') && (str[j] != '\n')){
-		s_depth[j-rep] = str[j];
-		++j;
+	++cursor;
+	rep = cursor;
+	//String that contains the depth
+	while ((str[cursor] != ' ') && (str[cursor] != '\r') && (str[cursor] != '\0') && (str[cursor] != '\n')){
+		s_depth[cursor-rep] = str[cursor];
+		++cursor;
 	}
-	s_depth[j-rep] = '\0';
+	s_depth[cursor-rep] = '\0';
 	depth = atoi(s_depth);
 
 	printf("Image properties\n-----------------\nWidth : %d\nHeight: %d\nColor depth: %d\n-----------------\n", width, height, depth);
@@ -119,7 +115,7 @@
 	fclose(pFile);
 
 	
-	int offset = j+1; //Number of bytes preceeding the image data
+	int offset = cursor+1; //Number of bytes preceeding the image data
 	unsigned char * pic = (unsigned char *)malloc(3*height*width*sizeof(char));
 
 
@@ -133,9 +129,6 @@
 	}
 
 	free(buffer);
-	clock_t begin = clock();
-	clock_t end = clock();
-	double time_spent;
 
 
 	//======================= ALGORITHM ===========================//
@@ -148,13 +141,18 @@
 	Output :
 		- array containing the filtered image
 	*/
+
+	//Check out the time
+	clock_t begin = clock();
+	clock_t end = clock();
+	double time_spent;
 	
 	printf("Algorithm started...\n");
 	unsigned char * newPic = (unsigned char *)malloc(3*height*width*sizeof(char));
 
 	int k=0;
-	//Creates a square mask
-	int adresses[4*Fs*Fs][2]; //Declare a larger than needed array
+	//Creates a square mask with relative postions of neighbors
+	int adresses[4*Fs*Fs][2]; //Declare a larger array than needed
 	for (int a = Fs; a >= -Fs; --a) {
 		for (int b = Fs; b >= -Fs; --b) {
 			if (a*a + b*b <= Fs*Fs) {
@@ -167,10 +165,10 @@
 	} //We now have k neighbors
 	int numthreads = 1;
 
-#pragma omp parallel
+#pragma omp parallel //Parallel region of the code
 	{
 		int actual_neighbors = 0;
-		int temp_Pic[k][3];//Create a local copy of the useful portion of the image
+		int temp_Pic[k][3];//Local copy of the useful portion of the image
 		int averageC[depth+1][3];
 		int intensityCount[depth+1];
 		int RGB_max[3]={0,0,0};
@@ -196,6 +194,7 @@
 
 				if (DEBUG)printf("Actual neighbors found: %d\n", actual_neighbors);
 
+				//Setting the variables to 0
 				for (int l=0 ; l<depth+1; ++l){
 					averageC[l][0] = 0;
 					averageC[l][1] = 0;
@@ -206,6 +205,8 @@
 				RGB_max[1]=0;
 				RGB_max[2]=0;
 				curMax = 0;
+
+				//Computes intensities and find the max
 				for (int l=0 ; l<actual_neighbors; ++l){
 					int curIntensity = floor((temp_Pic[l][0] + temp_Pic[l][1] + temp_Pic[l][2]) / (3 * Fl));
 					if (DEBUG)printf("Current intensity: %d\n", curIntensity);
@@ -222,6 +223,7 @@
 
 				if (DEBUG)printf("Max values: %d %d %d\n", RGB_max[0], RGB_max[1], RGB_max[2]);
 
+				//Sets the new pixel values
 				newPic[3*(i*width + j) + 0] = RGB_max[0] / curMax;
 				newPic[3*(i*width + j) + 1] = RGB_max[1] / curMax;
 				newPic[3*(i*width + j) + 2] = RGB_max[2] / curMax;
@@ -241,7 +243,6 @@
 	//Takes the filtred image and saves it as a .ppm
 	
 	char oily_filename[9] = "oily.ppm";
-	//strcat(oily_filename, filename);
 
 	FILE *pNewFile = fopen(oily_filename, "wb");
 	//Writing the header
