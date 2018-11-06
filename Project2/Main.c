@@ -17,6 +17,15 @@
 *	Under GNU General Public License 11/2018
 =======================================================================================*/
 
+/* STRUCTURES AND FUNCTIONS TO BE IMPLEMENTED
+* Sparse matrices structure cf. MPI class
+* Scalar product
+* Vector sparse matrix product
+* Scalar vector product
+* Vector sum
+* Euclidian norm
+*/
+
 
 	//======================= PRE-PROCESSING ============================//
 	//Reads the content of the image file and stores it in an array
