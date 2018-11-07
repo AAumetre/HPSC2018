@@ -16,20 +16,32 @@ typedef struct bsr_matrix bsr_matrix;
 struct bsr_matrix{
 	int nrows;
 	int ncolumns;
-  int block_size; // evenly divides nrows and ncolumns
-  int nnzb; // # of non-zero *blocks*
-  int n_elements_per_block;
-  unsigned int *block_row_offsets;
-  unsigned int *block_columns;
-  double *values;
+  	int block_size; // evenly divides nrows and ncolumns
+  	int nnzb; // # of non-zero *blocks*
+  	int n_elements_per_block;
+  	unsigned int *block_row_offsets;
+  	unsigned int *block_columns;
+  	double *values;
 };
 
+typedef struct csr_vector csr_vector; 
+struct csr_vector{
+	int nrows;
+  	int nnzb; // # of non-zero values
+  	unsigned int row_offsets;
+  	double *values;
+};
+
+/*=====================================================================================*/
 
 // Prototypes
 void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
 double bsr_get(bsr_matrix *matrix, int i, int j);
 int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
 void bsr_free(bsr_matrix *matrix);
+
+
+/*=====================================================================================*/
 
 // Implementation
 // Initialization function, sets all the variables and arrays from the structure
