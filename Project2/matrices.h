@@ -24,10 +24,11 @@ struct bsr_matrix{
   double *values;
 };
 
+
 // Prototypes
 void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
 double bsr_get(bsr_matrix *matrix, int i, int j);
-void bsr_set(bsr_matrix *matrix, int i, int j, double value);
+int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
 void bsr_free(bsr_matrix *matrix);
 
 // Implementation
@@ -46,7 +47,6 @@ void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int n
 
 // Fetches a value from the BSR matrix
 // TODO : Simplify this once it's 100% working
-// TODO : Find a way to tell wether a block exists or not (is empty or not)
 double bsr_get(bsr_matrix *matrix, int i_, int j_) {
    // Find the corresponding block
   int i = floor(i_/matrix->block_size); // Block-row index
@@ -83,49 +83,86 @@ double bsr_get(bsr_matrix *matrix, int i_, int j_) {
   return matrix->values[offset];
 }
 
-// Takes a matrix written as a 1D array and stores it as a bsr matrix
-void natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
+// Takes a matrix written as a 1D array and stores it as a bsr matrix!
+int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
 
-	unsigned int *temp_block_row_offsets = malloc(sizeof(int) * (size / block_size + 1));
-	unsigned int *temp_block_columns = malloc(sizeof(int) * (int)(size*size/block_size/block_size));
+	if (size%block_size != 0){ // The block size is incompatible with the matrix size
+		printf("!!! The block size is incompatible with the matrix size.\n");
+		return -1;
+	}
+	unsigned int b_size = size/block_size;
+	unsigned int *temp_block_row_offsets = malloc(sizeof(int) * (b_size + 1));
+	unsigned int *temp_block_columns = malloc(sizeof(int) * (int)(b_size*b_size));
 	double *temp_values = malloc(sizeof(double) * size*size);
 	long value_index = 0, block_count = 0;
+	char *block_matrix = malloc(sizeof(char)*b_size*b_size);
+	int temp_row_index = 0;
+	int temp_col_index = 0;
 
-	for (int i=0 ; i<size ; i+=block_size){
-		for (int j=0 ; j<size ; j+=block_size){
-			// Looking at a sub-matrix of size block_size x block_size
-
-			// Check if there is at least one non-zero value
+	/*======== Creation of the CSR matrix for the block matrix =========*/
+	temp_block_row_offsets[0] = 0;
+	// Browse the natural matrix, block by block
+	for (int j=0 ; j<size ; j+=block_size){
+		for (int i=0 ; i<size ; i+=block_size){
+			// Looking at a sub-matrix of size block_size x block_size,
+			// check if there is at least one non-zero value
 			bool empty = true;
-			for (int k=0 ; k<block_size ; ++k){
-				for (int l=0 ; l<block_size ; ++l){
-					if (natural[i*block_size+k + size*(j*block_size+l)] != 0){
+			for (int l=0 ; l<block_size ; ++l){
+				for (int k=0 ; k<block_size ; ++k){
+					if (natural[i+k + size*(j+l)] != 0){
 						empty = false;
 						break;
 					} 
 				}
-				if (!empty) break;
+				if (!empty)break;
 			}
 
 			if (!empty){
+				block_matrix[i/block_size + (j/block_size)*b_size] = 1;
 				// Non-empty case, append temp_values
-				for (int k=0 ; k<block_size ; ++k){
-					for (int l=0 ; l<block_size ; ++l){
-						temp_values[value_index] = natural[i*block_size+k + size*(j*block_size+l)];
+				for (int l=0 ; l<block_size ; ++l){
+					for (int k=0 ; k<block_size ; ++k){
+						temp_values[value_index] = natural[i+k + size*(j+l)];
 						++value_index;
 					}
 				}
+				temp_block_columns[temp_col_index] = i/block_size;
+				++temp_col_index;
 				++block_count;
 			}
-			else{// Empty case
-
+			else{
+				// Empty case
+				block_matrix[i/block_size + (j/block_size)*b_size] = 0;
 			}
 		}
+		++temp_row_index;
+		temp_block_row_offsets[temp_row_index] = block_count;
 	}
+	temp_block_row_offsets[temp_row_index+1] = block_count;
+
+
+	/*======== Allocation of the BSR matrix =========*/
+	/*for (int j = 0; j < b_size; ++j){
+		for (int i = 0; i < b_size; ++i){
+			printf("%d ", block_matrix[i+j*b_size]);
+		}
+		printf("\n");
+	}
+	printf("\n");*/
+
+	// Give the values to the receiving bsr matrix
 	bsr_init(matrix, size, size, block_size, block_count);
 	for (int i=0 ; i<block_count*block_size*block_size ; ++i){
 		matrix->values[i] = temp_values[i];
-		//printf("%f ", temp_values[i]);
+	}
+	for (int i = 0; i < b_size+1; ++i){
+		//printf("%d ", temp_block_row_offsets[i]);
+		matrix->block_row_offsets[i] = temp_block_row_offsets[i];
+	}
+	printf("\n");
+	for (int i = 0; i < block_count; ++i){
+		//printf("%d ", temp_block_columns[i]);
+		matrix->block_columns[i] = temp_block_columns[i];
 	}
 }
 

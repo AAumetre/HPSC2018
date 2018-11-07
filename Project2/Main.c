@@ -67,24 +67,28 @@
 
   		for (int j =0 ; j<4 ; ++j){
   			for (int i=0 ; i<4 ; ++i){
-  				printf("%f ", bsr_get(&mat, j,i));
+  				printf("%.0f ", bsr_get(&mat, j,i));
   			}
   			printf("\n");
-  			printf("\n");
-  			printf("\n");
   		}
-
-  		printf("Value: %f\n", bsr_get(&mat, 0,3));
-
 		bsr_free(&mat);
 
-		double natural[] = {1.0, 2.0, 3.0, 3.0,
-						    1.0, 0.0, 1.0, 2.0,
-						    0.0, 0.0, 2.0, 1.0,
-						    0.0, 0.0, 0.0, 6.0};
-		bsr_matrix mat2; 
-		natural_to_bsr(natural, &mat2, 4, 2);
+  		double natural2[] = {1.0, 2.0, 3.0,   0.0, 0.0, 0.0,
+						     1.0, 0.0, 1.0,   0.0, 0.0, 0.0,
+						     1.0, 0.0, 2.0,   0.0, 0.0, 0.0,
 
+						     0.0, 0.0, 0.0,   6.0, 1.0, 2.0,
+						     0.0, 0.0, 0.0,   1.0, 1.0, 2.0,
+						     0.0, 0.0, 0.0,   6.0, 1.0, 2.0};
+		bsr_matrix mat3; 
+		natural_to_bsr(natural2, &mat3, sqrt(sizeof(natural2)/sizeof(natural2[0])), 3);
+		for (int j =0 ; j<6 ; ++j){
+  			for (int i=0 ; i<6 ; ++i){
+  				printf("%.0f ", bsr_get(&mat3, j,i));
+  			}
+  			printf("\n");
+  		}
+  		bsr_free(&mat3);
 	//======================= PRE-PROCESSING ============================//
 
 	//======================= ALGORITHM =================================//
