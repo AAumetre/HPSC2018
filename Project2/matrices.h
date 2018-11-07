@@ -44,6 +44,8 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows);
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
 double csr_vector_norm(csr_vector *P);
 void csr_vector_free(csr_vector *vector);
+/*==============*/
+void bsr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
 
 
 /*=====================================================================================*/
@@ -221,9 +223,25 @@ void csr_vector_free(csr_vector *vector){
 }
 
 // Does a BSR matrix/vector product
-int bsr_vector(bsr_matrix *matrix, double *vector, int vector_size){
-	if (vector_size != matrix->nrows){
+void bsr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
+	if (vector->nrows != matrix->nrows){
 		printf("!!! Matrix and vector sizes disagree.\n");
 		return -1;
 	}
+	
+	double *row_vector = malloc(sizeof(double)*matrix->nrows);
+	double *result_vector = malloc(sizeof(double)*matrix->nrows);
+
+	for (int i = 0; i < matrix->nrows; ++i){
+		// Extract vectors by row from the matrix
+		for (int j = 0; j<matrix->nrows; ++j){
+			row_vector[j] = bsr_get(&matrix, i, j);
+		}
+		// Convert it to CSR vector
+		csr_vector csr_row_vector;
+		csr_vector_init(&csr_row_vector, row_vector, matrix->nrows);
+		// Do the scalar product
+		result_vector[i] = csr_vector_scalar(&vector, &csr_row_vector);
+	}
+	csr_vector_init(&csr_result_vector, result_vector, matrix->nrows);
 }
