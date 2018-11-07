@@ -191,25 +191,37 @@ void bsr_free(bsr_matrix *matrix) {
 
 void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	vector->nrows = nrows;
-	vector->nnzb = 0;
+	int temp_nnzb = 0;
 	for (int i = 0; i < nrows; ++i){
-		if (natural[i] != 0)++vector->nnzb;
+		if (natural[i] != 0)++temp_nnzb;
 	}
-	vector->rows = malloc(sizeof(int) * vector->nnzb);
-	vector->values = malloc(sizeof(double) * vector->nnzb);
+	vector->nnzb = temp_nnzb;
+	vector->rows = malloc(sizeof(int) * temp_nnzb);
+	vector->values = malloc(sizeof(double) * temp_nnzb);
 	int index = 0;
 	for (int i = 0; i < nrows; ++i){
 		if (natural[i] != 0){
 			vector->rows[index] = i;
 			vector->values[index] = natural[i];
+			++index;
 		}
 	}
 }
 
 double csr_vector_scalar(csr_vector *P, csr_vector *Q, int size){
 	double result = 0;
-	int intersection = malloc(sizeof(int)*nnzb);
-	//printf("Size: %d\n", P->nnzb);
+	int index_Q = 0;
+
+	// Finding the intersection between the rows (non-zero values)
+	for (int i = 0; i < P->nnzb; ++i){
+		while (Q->rows[index_Q] < P->rows[i]){
+			++index_Q;
+		}
+		if (Q->rows[index_Q] == P->rows[i]){
+			result += P->values[i]*Q->values[index_Q];
+		}
+	}
+	return result;
 }
 
 void csr_vector_free(csr_vector *vector){
