@@ -20,9 +20,6 @@
 #define DEBUG 0
 
 /* STRUCTURES AND FUNCTIONS TO BE IMPLEMENTED
-* Sparse matrices structure cf. MPI class
-*
-* Conversion function, from natural matrix to sparse ?
 * Scalar product
 * Vector sparse matrix product
 * Scalar vector product
@@ -89,6 +86,13 @@
   			printf("\n");
   		}
   		bsr_free(&mat3);
+
+  		csr_vector vec;
+  		double vec_nat[] = {1,0,0,2,3,1};
+  		csr_vector_init(&vec, vec_nat, 6);
+  		csr_vector_scalar(&vec, &vec, 6);
+
+
 	//======================= PRE-PROCESSING ============================//
 
 	//======================= ALGORITHM =================================//

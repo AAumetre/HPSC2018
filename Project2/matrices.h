@@ -28,7 +28,7 @@ typedef struct csr_vector csr_vector;
 struct csr_vector{
 	int nrows;
   	int nnzb; // # of non-zero values
-  	unsigned int row_offsets;
+  	unsigned int *rows;
   	double *values;
 };
 
@@ -39,6 +39,9 @@ void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int n
 double bsr_get(bsr_matrix *matrix, int i, int j);
 int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
 void bsr_free(bsr_matrix *matrix);
+/*==============*/
+void csr_vector_init(csr_vector *vector, double *natural, int nrows);
+void csr_vector_free(csr_vector *vector);
 
 
 /*=====================================================================================*/
@@ -183,6 +186,35 @@ void bsr_free(bsr_matrix *matrix) {
 	free(matrix->block_row_offsets);
 	free(matrix->block_columns);
 	free(matrix->values);
+}
+
+
+void csr_vector_init(csr_vector *vector, double *natural, int nrows){
+	vector->nrows = nrows;
+	vector->nnzb = 0;
+	for (int i = 0; i < nrows; ++i){
+		if (natural[i] != 0)++vector->nnzb;
+	}
+	vector->rows = malloc(sizeof(int) * vector->nnzb);
+	vector->values = malloc(sizeof(double) * vector->nnzb);
+	int index = 0;
+	for (int i = 0; i < nrows; ++i){
+		if (natural[i] != 0){
+			vector->rows[index] = i;
+			vector->values[index] = natural[i];
+		}
+	}
+}
+
+double csr_vector_scalar(csr_vector *P, csr_vector *Q, int size){
+	double result = 0;
+	int intersection = malloc(sizeof(int)*nnzb);
+	//printf("Size: %d\n", P->nnzb);
+}
+
+void csr_vector_free(csr_vector *vector){
+	free(vector->rows);
+	free(vector->values);
 }
 
 // Does a BSR matrix/vector product
