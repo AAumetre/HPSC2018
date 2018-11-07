@@ -74,6 +74,8 @@
   			printf("\n");
   		}
 
+  		printf("Value: %f\n", bsr_get(&mat, 0,3));
+
 		bsr_free(&mat);
 
 		double natural[] = {1.0, 2.0, 3.0, 3.0,

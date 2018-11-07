@@ -52,24 +52,35 @@ double bsr_get(bsr_matrix *matrix, int i_, int j_) {
   int i = floor(i_/matrix->block_size); // Block-row index
   int j = floor(j_/matrix->block_size); // Block-column index
 
+  //printf("(i,j) = (%d,%d)\n", i, j);
 
+  // Use CSR look-up algorithm to locate the block
+  bool found = false;
   int block_row_offset = matrix->block_row_offsets[i];
-  //if (j == matrix->block_columns[block_row_offset]){
-  int offset = block_row_offset*matrix->n_elements_per_block;
+  //printf("Block row offset = %d\n", block_row_offset);
+  int step = 0;
+  while (step < matrix->block_row_offsets[i+1] - block_row_offset){
+  	if (matrix->block_columns[block_row_offset+step] != j) ++step;
+  	else{
+		found = true;
+		break;
+	}
+  }
+  if (!found) return 0; // If the block is not present in the CSR representation, it's a 0
+  //printf("Step value : %d\n", step);
 
-  int i_block_start = matrix->block_size*block_row_offset;
-  int j_block_start = matrix->block_size*matrix->block_columns[block_row_offset];
-
+  // At this point, the block has been found
+  int offset = (block_row_offset+step)*matrix->n_elements_per_block;
+  //printf("Offset: %d\n", offset);
+  int i_block_start = matrix->block_size*i;
+  int j_block_start = matrix->block_size*j;
+  //printf("(i,j)_start = (%d,%d)\n", i_block_start, j_block_start);
   i_ -= i_block_start;
   j_ -= j_block_start;
 
   offset += i_*matrix->block_size + j_;
-
+  //printf("Offset: %d\n", offset);
   return matrix->values[offset];
-  /*}
-  else {
-  	return 0;
-  }*/
 }
 
 // Takes a matrix written as a 1D array and stores it as a bsr matrix
@@ -114,7 +125,7 @@ void natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_siz
 	bsr_init(matrix, size, size, block_size, block_count);
 	for (int i=0 ; i<block_count*block_size*block_size ; ++i){
 		matrix->values[i] = temp_values[i];
-		printf("%f ", temp_values[i]);
+		//printf("%f ", temp_values[i]);
 	}
 }
 
