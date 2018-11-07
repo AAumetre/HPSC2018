@@ -172,3 +172,11 @@ void bsr_free(bsr_matrix *matrix) {
 	free(matrix->block_columns);
 	free(matrix->values);
 }
+
+// Does a BSR matrix/vector product
+int bsr_vector(bsr_matrix *matrix, double *vector, int vector_size){
+	if (vector_size != matrix->nrows){
+		printf("!!! Matrix and vector sizes disagree.\n");
+		return -1;
+	}
+}
