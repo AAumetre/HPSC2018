@@ -92,12 +92,11 @@
   		// Vectors
   		csr_vector vec;
   		csr_vector vec2;
-  		double vec_nat[] =  {1,0,2,2,2,1};
+  		double vec_nat[] =  {1,0,2,0,0,1};
   		double vec_nat2[] = {1,1,1,0,3,0};
   		csr_vector_init(&vec, vec_nat, 6);
   		csr_vector_init(&vec2, vec_nat2, 6);
 
-  		printf("Scalar product: %.0f\n", csr_vector_scalar(&vec, &vec2, 6));
   		csr_vector_free(&vec);
   		csr_vector_free(&vec2);
 		

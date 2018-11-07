@@ -41,6 +41,8 @@ int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size
 void bsr_free(bsr_matrix *matrix);
 /*==============*/
 void csr_vector_init(csr_vector *vector, double *natural, int nrows);
+double csr_vector_scalar(csr_vector *P, csr_vector *Q);
+double csr_vector_norm(csr_vector *P);
 void csr_vector_free(csr_vector *vector);
 
 
@@ -67,12 +69,9 @@ double bsr_get(bsr_matrix *matrix, int i_, int j_) {
   int i = floor(i_/matrix->block_size); // Block-row index
   int j = floor(j_/matrix->block_size); // Block-column index
 
-  //printf("(i,j) = (%d,%d)\n", i, j);
-
   // Use CSR look-up algorithm to locate the block
   bool found = false;
   int block_row_offset = matrix->block_row_offsets[i];
-  //printf("Block row offset = %d\n", block_row_offset);
   int step = 0;
   while (step < matrix->block_row_offsets[i+1] - block_row_offset){
   	if (matrix->block_columns[block_row_offset+step] != j) ++step;
@@ -82,19 +81,15 @@ double bsr_get(bsr_matrix *matrix, int i_, int j_) {
 	}
   }
   if (!found) return 0; // If the block is not present in the CSR representation, it's a 0
-  //printf("Step value : %d\n", step);
 
   // At this point, the block has been found
   int offset = (block_row_offset+step)*matrix->n_elements_per_block;
-  //printf("Offset: %d\n", offset);
   int i_block_start = matrix->block_size*i;
   int j_block_start = matrix->block_size*j;
-  //printf("(i,j)_start = (%d,%d)\n", i_block_start, j_block_start);
   i_ -= i_block_start;
   j_ -= j_block_start;
 
   offset += i_*matrix->block_size + j_;
-  //printf("Offset: %d\n", offset);
   return matrix->values[offset];
 }
 
@@ -155,28 +150,17 @@ int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size
 	}
 	temp_block_row_offsets[temp_row_index+1] = block_count;
 
-
 	/*======== Allocation of the BSR matrix =========*/
-	/*for (int j = 0; j < b_size; ++j){
-		for (int i = 0; i < b_size; ++i){
-			printf("%d ", block_matrix[i+j*b_size]);
-		}
-		printf("\n");
-	}
-	printf("\n");*/
-
 	// Give the values to the receiving bsr matrix
 	bsr_init(matrix, size, size, block_size, block_count);
 	for (int i=0 ; i<block_count*block_size*block_size ; ++i){
 		matrix->values[i] = temp_values[i];
 	}
 	for (int i = 0; i < b_size+1; ++i){
-		//printf("%d ", temp_block_row_offsets[i]);
 		matrix->block_row_offsets[i] = temp_block_row_offsets[i];
 	}
 	printf("\n");
 	for (int i = 0; i < block_count; ++i){
-		//printf("%d ", temp_block_columns[i]);
 		matrix->block_columns[i] = temp_block_columns[i];
 	}
 }
@@ -188,7 +172,7 @@ void bsr_free(bsr_matrix *matrix) {
 	free(matrix->values);
 }
 
-
+// Initialization function, sets all the variables and arrays from the structure
 void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	vector->nrows = nrows;
 	int temp_nnzb = 0;
@@ -208,7 +192,8 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	}
 }
 
-double csr_vector_scalar(csr_vector *P, csr_vector *Q, int size){
+// Does a scalar product between two CSR vectors
+double csr_vector_scalar(csr_vector *P, csr_vector *Q){
 	double result = 0;
 	int index_Q = 0;
 
@@ -224,6 +209,12 @@ double csr_vector_scalar(csr_vector *P, csr_vector *Q, int size){
 	return result;
 }
 
+// Computes the Euclidian norm of a CSR vector
+double csr_vector_norm(csr_vector *P){
+	return sqrt(csr_vector_scalar(P,P));
+}
+
+// Frees the memory
 void csr_vector_free(csr_vector *vector){
 	free(vector->rows);
 	free(vector->values);
