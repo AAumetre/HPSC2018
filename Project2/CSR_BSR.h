@@ -10,8 +10,7 @@
 =======================================================================================*/
 
 // Structure
-// BSR https://medium.com/@jmaxg3/101-ways-to-store-a-sparse-matrix-c7f2bf15a229
-// Implementation
+// CSR & BSR reference: https://medium.com/@jmaxg3/101-ways-to-store-a-sparse-matrix-c7f2bf15a229
 typedef struct bsr_matrix bsr_matrix; 
 struct bsr_matrix{
 	int nrows;
@@ -42,6 +41,7 @@ void bsr_free(bsr_matrix *matrix);
 /*==============*/
 void csr_vector_init(csr_vector *vector, double *natural, int nrows);
 double csr_vector_get(csr_vector *vector, int index);
+void csr_vector_scale(csr_vector *vector, double scale);
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
 double csr_vector_norm(csr_vector *P);
 void csr_vector_free(csr_vector *vector);
@@ -51,7 +51,8 @@ int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_re
 
 /*=====================================================================================*/
 
-// Implementation
+
+/*============== BSR Matrix functions ===================*/
 // Initialization function, sets all the variables and arrays from the structure
 void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb){
 	matrix->nrows = nrows;
@@ -175,6 +176,9 @@ void bsr_free(bsr_matrix *matrix) {
 	free(matrix->values);
 }
 
+
+/*============== CSR Vector functions ===================*/
+
 // Initialization function, sets all the variables and arrays from the structure
 void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	vector->nrows = nrows;
@@ -210,6 +214,13 @@ double csr_vector_get(csr_vector *vector, int index){
 	else return 0;
 }
 
+// Scales a CSR vector
+void csr_vector_scale(csr_vector *vector, double scaling_factor){
+	for (int i = 0; i < vector->nnzb; ++i){
+		vector->values[i] *= scaling_factor;
+	}
+}
+
 // Does a scalar product between two CSR vectors
 double csr_vector_scalar(csr_vector *P, csr_vector *Q){
 	double result = 0;
@@ -238,10 +249,12 @@ void csr_vector_free(csr_vector *vector){
 	free(vector->values);
 }
 
+
+/*============== BSR Matrix & CSR Vector functions ===================*/
 // Does a BSR matrix/vector product
 int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
 	if (vector->nrows != matrix->nrows){
-		printf("!!! Matrix and vector sizes disagree.\n");
+		printf("!!! Matrix and vector dimensions disagree.\n");
 		return -1;
 	}
 	

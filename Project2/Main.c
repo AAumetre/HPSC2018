@@ -15,7 +15,7 @@
 #include <malloc.h>
 #include <stdbool.h>
 
-#include "matrices.h"
+#include "CSR_BSR.h"
 
 #define DEBUG 0
 
@@ -101,7 +101,7 @@
   		// Matrix vector product
   		/*csr_vector vec3;
   		csr_vector vec4;
-  		double vec_nat3[] =  {0,1,4,2,3,1};
+  		double vec_nat3[] =  {0,1,4,0,0,0};
   		csr_vector_init(&vec3, vec_nat3, 6);
 
   		double natural3[] = {1.0, 2.0, 3.0,   0.0, 0.0, 0.0,
@@ -115,6 +115,13 @@
 		natural_to_bsr(natural3, &mat4, sqrt(sizeof(natural3)/sizeof(natural3[0])), 3);
 
 		bsr_matrix_vector(&mat4, &vec3, &vec4);
+  		printf("Result:\n");
+		for (int i = 0; i < 6; ++i){
+  			printf("%.0f\n", csr_vector_get(&vec4, i));
+  		}
+  		double scale = 0.5;
+  		printf("Scaling by a factor of %.2f:\n", scale);
+  		csr_vector_scale(&vec4, scale);
 		for (int i = 0; i < 6; ++i){
   			printf("%.0f\n", csr_vector_get(&vec4, i));
   		}
@@ -123,6 +130,7 @@
   		csr_vector_free(&vec3);
   		csr_vector_free(&vec4);
   		*/
+
 		
 
 	//======================= PRE-PROCESSING ============================//
