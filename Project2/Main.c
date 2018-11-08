@@ -18,6 +18,7 @@
 #include "CSR_BSR.h"
 
 #define DEBUG 0
+#define DEFAULT_ARRAY_SIZE 10
 
 
 
@@ -30,6 +31,9 @@ int main(int argc, char **argv){
 	double m = 0.01; // Time step
 
 //======================= ALGORITHM =================================//
+	// Conjugate gradient method
+	csr_vector *x[DEFAULT_ARRAY_SIZE];
+	csr_vector_init(&x[0], [], size);
 
 //======================= POST-PROCESSING ===========================//
 
