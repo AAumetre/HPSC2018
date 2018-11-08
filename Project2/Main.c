@@ -19,13 +19,9 @@
 
 #define DEBUG 0
 
-/* STRUCTURES AND FUNCTIONS TO BE IMPLEMENTED
-* Vector sum
-*/
 
 
-
-	int main(int argc, char **argv){
+int main(int argc, char **argv){
 		/*
 		bsr_matrix mat; // Creates an empty BSR matrix
 		/*
@@ -129,6 +125,26 @@
   		csr_vector_free(&vec4);
   		*/
 
+
+		// Vector addition
+	csr_vector vec5;
+	csr_vector vec6;
+	csr_vector vec7;
+	double vec_nat5[] =  {0,1,4,3,1,0};
+	double vec_nat6[] =  {0,1,4,0,0,0};
+	csr_vector_init(&vec5, vec_nat5, 6);
+	csr_vector_init(&vec6, vec_nat6, 6);
+
+	csr_vector_add(&vec5, &vec6, &vec7);
+	for (int i = 0; i < 6; ++i){
+		printf("%.0f\n", csr_vector_get(&vec7, i));
+	}
+
+	csr_vector_free(&vec5);
+	csr_vector_free(&vec6);
+	csr_vector_free(&vec67;
+
+
 		
 
 	//======================= PRE-PROCESSING ============================//
@@ -136,8 +152,8 @@
 	//======================= ALGORITHM =================================//
 
 	//======================= POST-PROCESSING ===========================//
-	
+		
 	//======================= END OF PROGRAM ============================//
 
-	return(0);
-}
+		return(0);
+	}

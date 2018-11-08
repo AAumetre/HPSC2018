@@ -25,33 +25,33 @@ struct bsr_matrix{
   	unsigned int *block_row_offsets;
   	unsigned int *block_columns;
   	double *values;
-};
+  };
 
-typedef struct csr_vector csr_vector; 
-struct csr_vector{
-	int nrows;
+  typedef struct csr_vector csr_vector; 
+  struct csr_vector{
+  	int nrows;
   	int nnzb; // # of non-zero values
   	unsigned int *rows;
   	double *values;
-};
+  };
 
 /*=====================================================================================*/
 
 // Prototypes
-void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
-double bsr_get(bsr_matrix *matrix, int i, int j);
-int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
-void bsr_free(bsr_matrix *matrix);
+  void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
+  double bsr_get(bsr_matrix *matrix, int i, int j);
+  int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
+  void bsr_free(bsr_matrix *matrix);
 /*==============*/
-void csr_vector_init(csr_vector *vector, double *natural, int nrows);
-double csr_vector_get(csr_vector *vector, int index);
-void csr_vector_scale(csr_vector *vector, double scale);
-int csr_vector_sum(csr_vetor *P, csr_vector *Q, csr_vector *R);
-double csr_vector_scalar(csr_vector *P, csr_vector *Q);
-double csr_vector_norm(csr_vector *P);
-void csr_vector_free(csr_vector *vector);
+  void csr_vector_init(csr_vector *vector, double *natural, int nrows);
+  double csr_vector_get(csr_vector *vector, int index);
+  void csr_vector_scale(csr_vector *vector, double scale);
+  int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
+  double csr_vector_scalar(csr_vector *P, csr_vector *Q);
+  double csr_vector_norm(csr_vector *P);
+  void csr_vector_free(csr_vector *vector);
 /*==============*/
-int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
+  int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
 
 
 /*=====================================================================================*/
@@ -59,21 +59,21 @@ int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_re
 
 /*============== BSR Matrix functions ===================*/
 // Initialization function, sets all the variables and arrays from the structure
-void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb){
-	matrix->nrows = nrows;
-	matrix->ncolumns = ncolumns;
-	matrix->block_size = block_size;
-	matrix->nnzb = nnzb;
-	matrix->n_elements_per_block = block_size*block_size;
+  void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb){
+  	matrix->nrows = nrows;
+  	matrix->ncolumns = ncolumns;
+  	matrix->block_size = block_size;
+  	matrix->nnzb = nnzb;
+  	matrix->n_elements_per_block = block_size*block_size;
 
-	matrix->block_row_offsets = malloc(sizeof(int) * (nrows / block_size + 1));
-	matrix->block_columns = malloc(sizeof(int) * nnzb);
-	matrix->values = malloc(sizeof(double) * nnzb*block_size*block_size);
-}
+  	matrix->block_row_offsets = malloc(sizeof(int) * (nrows / block_size + 1));
+  	matrix->block_columns = malloc(sizeof(int) * nnzb);
+  	matrix->values = malloc(sizeof(double) * nnzb*block_size*block_size);
+  }
 
 // Fetches a value from the BSR matrix
 // TODO : Simplify this once it's 100% working
-double bsr_get(bsr_matrix *matrix, int i_, int j_) {
+  double bsr_get(bsr_matrix *matrix, int i_, int j_) {
    // Find the corresponding block
   int i = floor(i_/matrix->block_size); // Block-row index
   int j = floor(j_/matrix->block_size); // Block-column index
@@ -85,9 +85,9 @@ double bsr_get(bsr_matrix *matrix, int i_, int j_) {
   while (step < matrix->block_row_offsets[i+1] - block_row_offset){
   	if (matrix->block_columns[block_row_offset+step] != j) ++step;
   	else{
-		found = true;
-		break;
-	}
+  		found = true;
+  		break;
+  	}
   }
   if (!found) return 0; // If the block is not present in the CSR representation, it's a 0
 
@@ -212,7 +212,7 @@ double csr_vector_get(csr_vector *vector, int index){
 	}
 
 	int looking_index = 0;
-	while ((looking_index < vector->nnzb) && vector->rows[looking_index] < index){
+	while (looking_index < vector->nnzb && vector->rows[looking_index] < index){
 		++looking_index;
 	}
 	if (vector->rows[looking_index] == index)return vector->values[looking_index];
@@ -227,9 +227,8 @@ void csr_vector_scale(csr_vector *vector, double scaling_factor){
 }
 
 // Sums two CSR vectors and stores the result in a third vector
-// TODO : store the result ine the main for loop, as soon as it it computed
-int csr_vector_sum(csr_vetor *P, csr_vector *Q, csr_vector *R){
-	if ((P->nrows != Q->nrows) || (P->nrows != R->nrows)){
+int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
+	if (P->nrows != Q->nrows){
 		printf("!!! Vector dimensions mismatch.\n");
 		return -1;
 	}
@@ -237,13 +236,15 @@ int csr_vector_sum(csr_vetor *P, csr_vector *Q, csr_vector *R){
 	double *result = malloc(sizeof(double)*P->nrows);
 	int *adding_list = malloc(sizeof(int)*P->nrows);
 	int max_nnzb = 0;
-	int new_nnzb = 0;
-	if (P->nnzb > Q->nzzb)max_nnzb = P->nnzb;
-	else max_nnzb = Q->nzzb;
+	if (P->nnzb > Q->nnzb)max_nnzb = P->nnzb;
+	else max_nnzb = Q->nnzb;
 
 	// Build the list of rows with non-zero values
-	for (int i = 0; i < max_nnzb; ++i){
-		/* code */
+	int new_nnzb = merge_list(P->rows, Q->rows, adding_list, P->nnzb, Q->nnzb);
+
+	// Compute the sum
+	for (int i = 0; i < new_nnzb; ++i){
+		result[i] = csr_vector_get(P, adding_list[i]) + csr_vector_get(Q, adding_list[i]);
 	}
 
 	// Do a manual initilization, as the rows and values are already computed
