@@ -247,8 +247,9 @@ int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
 		result[i] = csr_vector_get(P, adding_list[i]) + csr_vector_get(Q, adding_list[i]);
 	}
 
-	// Do a manual initilization, as the rows and values are already computed
-	R->nrows = P->nrows;
+	// Do a half manual initilization, as the rows and values are already computed
+	double empty[] = {0};
+	csr_vector_init(R, empty, P->nrows);
 	R->nnzb = new_nnzb;
 	for (int i = 0; i < new_nnzb; ++i){
 		R->rows[i] = adding_list[i];
