@@ -20,8 +20,6 @@
 #define DEBUG 0
 
 /* STRUCTURES AND FUNCTIONS TO BE IMPLEMENTED
-* Scalar product
-* Vector sparse matrix product
 * Scalar vector product
 * Vector sum
 * Euclidian norm
@@ -90,7 +88,7 @@
   		*/
 
   		// Vectors
-  		csr_vector vec;
+  		/*csr_vector vec;
   		csr_vector vec2;
   		double vec_nat[] =  {1,0,2,0,0,1};
   		double vec_nat2[] = {1,1,1,0,3,0};
@@ -98,7 +96,33 @@
   		csr_vector_init(&vec2, vec_nat2, 6);
 
   		csr_vector_free(&vec);
-  		csr_vector_free(&vec2);
+  		csr_vector_free(&vec2);*/
+
+  		// Matrix vector product
+  		/*csr_vector vec3;
+  		csr_vector vec4;
+  		double vec_nat3[] =  {0,1,4,2,3,1};
+  		csr_vector_init(&vec3, vec_nat3, 6);
+
+  		double natural3[] = {1.0, 2.0, 3.0,   0.0, 0.0, 0.0,
+						     1.0, 0.0, 1.0,   0.0, 0.0, 0.0,
+						     1.0, 0.0, 2.0,   0.0, 0.0, 0.0,
+
+						     0.0, 0.0, 0.0,   6.0, 1.0, 2.0,
+						     0.0, 0.0, 0.0,   1.0, 1.0, 2.0,
+						     0.0, 0.0, 0.0,   6.0, 1.0, 2.0};
+		bsr_matrix mat4; 
+		natural_to_bsr(natural3, &mat4, sqrt(sizeof(natural3)/sizeof(natural3[0])), 3);
+
+		bsr_matrix_vector(&mat4, &vec3, &vec4);
+		for (int i = 0; i < 6; ++i){
+  			printf("%.0f\n", csr_vector_get(&vec4, i));
+  		}
+
+		bsr_free(&mat4);
+  		csr_vector_free(&vec3);
+  		csr_vector_free(&vec4);
+  		*/
 		
 
 	//======================= PRE-PROCESSING ============================//

@@ -41,11 +41,12 @@ int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size
 void bsr_free(bsr_matrix *matrix);
 /*==============*/
 void csr_vector_init(csr_vector *vector, double *natural, int nrows);
+double csr_vector_get(csr_vector *vector, int index);
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
 double csr_vector_norm(csr_vector *P);
 void csr_vector_free(csr_vector *vector);
 /*==============*/
-void bsr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
+int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
 
 
 /*=====================================================================================*/
@@ -194,6 +195,21 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	}
 }
 
+// TODO : implementation in O(ln(n)), taking the half each time
+double csr_vector_get(csr_vector *vector, int index){
+	if (index >= vector->nrows){
+		printf("!!! Index out of bounds.\n");
+		return -1;
+	}
+
+	int looking_index = 0;
+	while ((looking_index < vector->nnzb) && vector->rows[looking_index] < index){
+		++looking_index;
+	}
+	if (vector->rows[looking_index] == index)return vector->values[looking_index];
+	else return 0;
+}
+
 // Does a scalar product between two CSR vectors
 double csr_vector_scalar(csr_vector *P, csr_vector *Q){
 	double result = 0;
@@ -223,7 +239,7 @@ void csr_vector_free(csr_vector *vector){
 }
 
 // Does a BSR matrix/vector product
-void bsr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
+int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
 	if (vector->nrows != matrix->nrows){
 		printf("!!! Matrix and vector sizes disagree.\n");
 		return -1;
@@ -235,13 +251,13 @@ void bsr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_v
 	for (int i = 0; i < matrix->nrows; ++i){
 		// Extract vectors by row from the matrix
 		for (int j = 0; j<matrix->nrows; ++j){
-			row_vector[j] = bsr_get(&matrix, i, j);
+			row_vector[j] = bsr_get(matrix, i, j);
 		}
 		// Convert it to CSR vector
 		csr_vector csr_row_vector;
 		csr_vector_init(&csr_row_vector, row_vector, matrix->nrows);
 		// Do the scalar product
-		result_vector[i] = csr_vector_scalar(&vector, &csr_row_vector);
+		result_vector[i] = csr_vector_scalar(vector, &csr_row_vector);
 	}
-	csr_vector_init(&csr_result_vector, result_vector, matrix->nrows);
+	csr_vector_init(csr_result_vector, result_vector, matrix->nrows);
 }
