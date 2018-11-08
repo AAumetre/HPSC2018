@@ -23,6 +23,11 @@
 
 int main(int argc, char **argv){
 //======================= PRE-PROCESSING ============================//
+	int T_max = 1; // Simulation duration [s]
+	int L = 1; // Cube size [m]
+	int c_0 = 1; // Initial concentraion [g/m³]
+	double h = 0.1; // Space step
+	double m = 0.01; // Time step
 
 //======================= ALGORITHM =================================//
 

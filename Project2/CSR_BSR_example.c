@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "CSR_BSR.h"
 
