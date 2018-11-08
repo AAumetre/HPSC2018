@@ -1,4 +1,3 @@
-
 /*=======================================================================================
 *	This code was written by: 
 *								Antonin Aumètre - antonin.aumetre@gmail.com
@@ -8,6 +7,11 @@
 *
 *	Under GNU General Public License 11/2018
 =======================================================================================*/
+
+#include "algorithms.h"
+/*=====================================================================================
+* Contains all the necessary functions to handle BSR matrices and CSR vectors
+=====================================================================================*/
 
 // Structure
 // CSR & BSR reference: https://medium.com/@jmaxg3/101-ways-to-store-a-sparse-matrix-c7f2bf15a229
@@ -42,6 +46,7 @@ void bsr_free(bsr_matrix *matrix);
 void csr_vector_init(csr_vector *vector, double *natural, int nrows);
 double csr_vector_get(csr_vector *vector, int index);
 void csr_vector_scale(csr_vector *vector, double scale);
+int csr_vector_sum(csr_vetor *P, csr_vector *Q, csr_vector *R);
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
 double csr_vector_norm(csr_vector *P);
 void csr_vector_free(csr_vector *vector);
@@ -221,6 +226,35 @@ void csr_vector_scale(csr_vector *vector, double scaling_factor){
 	}
 }
 
+// Sums two CSR vectors and stores the result in a third vector
+// TODO : store the result ine the main for loop, as soon as it it computed
+int csr_vector_sum(csr_vetor *P, csr_vector *Q, csr_vector *R){
+	if ((P->nrows != Q->nrows) || (P->nrows != R->nrows)){
+		printf("!!! Vector dimensions mismatch.\n");
+		return -1;
+	}
+
+	double *result = malloc(sizeof(double)*P->nrows);
+	int *adding_list = malloc(sizeof(int)*P->nrows);
+	int max_nnzb = 0;
+	int new_nnzb = 0;
+	if (P->nnzb > Q->nzzb)max_nnzb = P->nnzb;
+	else max_nnzb = Q->nzzb;
+
+	// Build the list of rows with non-zero values
+	for (int i = 0; i < max_nnzb; ++i){
+		/* code */
+	}
+
+	// Do a manual initilization, as the rows and values are already computed
+	R->nrows = P->nrows;
+	R->nnzb = new_nnzb;
+	for (int i = 0; i < new_nnzb; ++i){
+		R->rows[i] = adding_list[i];
+		R->values[i] = result[i];
+	}
+}
+
 // Does a scalar product between two CSR vectors
 double csr_vector_scalar(csr_vector *P, csr_vector *Q){
 	double result = 0;
@@ -254,7 +288,7 @@ void csr_vector_free(csr_vector *vector){
 // Does a BSR matrix/vector product
 int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
 	if (vector->nrows != matrix->nrows){
-		printf("!!! Matrix and vector dimensions disagree.\n");
+		printf("!!! Matrix and vector dimensions mismatch.\n");
 		return -1;
 	}
 	

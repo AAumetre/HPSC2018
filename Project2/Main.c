@@ -20,9 +20,7 @@
 #define DEBUG 0
 
 /* STRUCTURES AND FUNCTIONS TO BE IMPLEMENTED
-* Scalar vector product
 * Vector sum
-* Euclidian norm
 */
 
 
