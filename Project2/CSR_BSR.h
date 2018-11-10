@@ -7,6 +7,11 @@
 *
 *	Under GNU General Public License 11/2018
 =======================================================================================*/
+#include <math.h>
+#include <time.h>
+#include <malloc.h>
+#include <stdbool.h>
+#include <string.h>
 
 #include "algorithms.h"
 /*=====================================================================================
@@ -220,11 +225,18 @@ double csr_vector_get(csr_vector *vector, int index){
 }
 
 int csr_vector_set(csr_vector *vector, double value, int index){
-	if (index >= nector->nrows){
+	if (index >= vector->nrows){
 		printf("!!! Index out of bounds.\n");
 		return -1;
 	}
-	/***/
+	/**
+	get a new sorted rows with the index included
+	if the size changed, realloc
+	eventually realloc vector->values
+	insert value at the index computed by the insertion function
+	update nnzb accordingly
+	**/
+	int inserted_index = sorted_list_insertion_int(vector->rows, index, vector->nrows);
 }
 
 // Scales a CSR vector

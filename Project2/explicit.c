@@ -2,9 +2,11 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "CSR_BSR.h"
+
 int main(int argc, char const *argv[])
 {
-  double h,m, L, Tmax, vx, vy, vz, D;
+  /*double h,m, L, Tmax, vx, vy, vz, D;
   h = 0.1;
   m = 0.001;
   L = 1;
@@ -92,7 +94,15 @@ int main(int argc, char const *argv[])
     }
   }
 
+*/
+  int list[] = {1,3,4};
 
+  int index = sorted_list_insertion_int(list, 2, 3);
+
+  printf("Key inserted at index %d\n", index);
+  for (int i = 0; i < sizeof(list)/sizeof(int); ++i){
+    printf("%d\n", list[i]);
+  }
 
 
   return 0;
