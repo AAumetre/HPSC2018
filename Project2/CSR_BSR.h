@@ -231,13 +231,8 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 		printf("!!! Index out of bounds.\n");
 		return -1;
 	}
-	/**
-	eventually realloc vector->values
-	insert value at the index computed by the insertion function
-	update nnzb accordingly
-	**/
 
-	// Does the key insertion and gives the index at which the value was inserted
+	// Does the key insertion in rows and gives the index at which the value was inserted
 	int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
 	bool isPresent = false;
 	int target_index;
@@ -256,31 +251,36 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 
 	// Case where the key is not already in the list	
 	if (!isPresent){
-		for (int i = 0; i < vector->nnzb+1; ++i){
-			if (i == target_index) new_rows[i] = index; // Insertion
-			if (i > target_index) new_rows[i+1] = vector->rows[i];
-			else new_rows[i] = vector->rows[i]; 
-		}
 		new_nnzb = vector->nnzb+1;
-		realloc(vector->rows, sizeof(int)*new_nnzb); // Resizing
-		memcpy(vector->rows, new_rows, new_nnzb);
+		double *new_values = malloc(sizeof(double)*new_nnzb);
+		// Create new lists with the correct values
+		for (int i = 0; i < vector->nnzb+1; ++i){
+			if (i == target_index){
+				new_rows[i] = index; // Insertion
+				new_values[i] = value;
+			}
+			else if(i > target_index){
+				new_rows[i] = vector->rows[i-1];
+				new_values[i] = vector->values[i-1];
+			}
+			else {
+				new_rows[i] = vector->rows[i]; 
+				new_values[i] = vector->values[i]; 
+			}
+		}
+
+		// Setting the new values
+		int *error = realloc(vector->rows, new_nnzb);
+		error = realloc(vector->values, new_nnzb);
+		vector->nnzb = new_nnzb;
+		for (int i = 0; i < new_nnzb; ++i){
+			vector->rows[i] = new_rows[i];
+			vector->values[i] = new_values[i];
+		}
 	}
-	else new_nnzb = vector->nnzb;
-	free(new_rows);
-
-	// Reallocates values if needed and inserts the new value
-	if (!isPresent) realloc(vector->values, sizeof(double)*new_nnzb);
-	double *new_values = malloc(sizeof(double)*new_nnzb);
-
-	for (int i = 0; i < new_nnzb; ++i){ // Insertion loop
-		if (i == target_index) new_values[i] = value; // Insertion
-		if (i > target_index) new_values[i+1] = vector->values[i];
-		else new_values[i] = vector->values[i]; 
-	}	
-	memcpy(vector->values, new_values, new_nnzb);
-	free(new_values);
-
-	vector->nnzb = new_nnzb;
+	else {
+		vector->values[target_index] = value;
+	}
 }
 
 // Scales a CSR vector

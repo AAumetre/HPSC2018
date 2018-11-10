@@ -100,12 +100,12 @@ csr_vector vec;
 double natural[] = {0,7,0,8,0,9};
 csr_vector_init(&vec, natural, 6);
 
-csr_vector_set(&vec, 1.0, 2);
+csr_vector_set(&vec, 1.0, 1);
 
-for (int i = 0; i < 6; ++i){
-printf("%.0f\n", csr_vector_get(&vec, i));
+for (int i = 0; i < 6; ++i)
+{
+  printf("%.0f ", csr_vector_get(&vec,i));
 }
-
 
   return 0;
 }
