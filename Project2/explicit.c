@@ -80,7 +80,7 @@ int main(int argc, char const *argv[])
           isXbound = 0;
     }
 
-    if (!(iteration%50))
+    if (!(iteration%500))
     {
       for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
       {
