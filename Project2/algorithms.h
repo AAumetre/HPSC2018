@@ -14,7 +14,7 @@
 
 // Prototypes
 int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
-int sorted_list_insertion_int(int target[], int key, int target_size);
+int sorted_list_insertion_int(int **target, int key, int target_size);
 
 /*=====================================================================================*/
 // Implementation
@@ -75,17 +75,17 @@ int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int
 // Inserts a key into a sorted list, returns the index at which the key was inserted
 // !!!! If the key is already present, this function does not add an other occurence
 // TODO : do it efficiently !
-int sorted_list_insertion_int(int *target, int key, int target_size){
+/*int sorted_list_insertion_int(int **target, int key, int target_size){
 	int *resulting_list = malloc(sizeof(int)*(target_size+1));
 	bool isPresent = false;
 	int index;
-	for (int i = 0; i < target_size; ++i){
-		if (target[i] == key){
+	for (int i = 0; i < target_size; ++i){ // This part needs to be optimized
+		if ((*target[i]) == key){
 			isPresent = true;
 			index = i;
 			break;
 		}
-		if (target[i] > key){
+		if ((*target[i]) > key){
 			index = i;
 			break;
 		}
@@ -95,15 +95,17 @@ int sorted_list_insertion_int(int *target, int key, int target_size){
 	if (!isPresent){
 		for (int i = 0; i < target_size+1; ++i){
 			if (i == index) resulting_list[i] = key; // Insertion
-			if (i > index) resulting_list[i+1] = target[i];
-			else resulting_list[i] = target[i]; 
+			if (i > index) resulting_list[i+1] = (*target[i]);
+			else resulting_list[i] = (*target[i]); 
 		}
-		realloc(target, sizeof(int)*(target_size+1)); // Resizing
-		memcpy(target, resulting_list, target_size+1);
+		realloc(*target, sizeof(int)*(target_size+1)); // Resizing
+		memcpy(*target, resulting_list, target_size+1);
 	}
+	free(resulting_list);
 
 	return index;
 }
+*/
 
 // Inserts a key at a given location, in a sorted list
 void sorted_list_insertion_index_int(int target[], int key, int index, int target_size){

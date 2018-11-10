@@ -95,14 +95,16 @@ int main(int argc, char const *argv[])
   }
 
 */
-  int list[] = {1,3,4};
 
-  int index = sorted_list_insertion_int(list, 2, 3);
+csr_vector vec;
+double natural[] = {0,7,0,8,0,9};
+csr_vector_init(&vec, natural, 6);
 
-  printf("Key inserted at index %d\n", index);
-  for (int i = 0; i < sizeof(list)/sizeof(int); ++i){
-    printf("%d\n", list[i]);
-  }
+csr_vector_set(&vec, 1.0, 2);
+
+for (int i = 0; i < 6; ++i){
+printf("%.0f\n", csr_vector_get(&vec, i));
+}
 
 
   return 0;
