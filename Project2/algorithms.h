@@ -15,7 +15,6 @@
 // Prototypes
 int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
 
-
 /*=====================================================================================*/
 // Implementation
 
@@ -70,14 +69,4 @@ int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int
 		}
 	}
 	return k;
-}
-
-// Inserts a key into a sorted list
-void sorted_list_insertion_int(int target[], int key, int target_size){
-
-}
-
-// Inserts a key at a given location, in a sorted list
-void sorted_list_insertion_index_int(int target[], int key, int index, int target_size){
-
 }

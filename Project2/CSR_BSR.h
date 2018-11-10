@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
+#include <malloc.h>
+#include <string.h>
 
 #include "algorithms.h"
 /*=====================================================================================
@@ -234,14 +237,63 @@ double csr_vector_get(csr_vector *vector, int index){
 	else return 0;
 }
 
-// Sets a value at a given index
+// Sets a value at a given index of a CSR vector
+// TODO : do it efficiently !
 int csr_vector_set(csr_vector *vector, double value, int index){
 	if (index >= vector->nrows){
 		printf("!!! Index out of bounds.\n");
 		return -1;
 	}
 
+	// Does the key insertion in rows and gives the index at which the value was inserted
+	int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
+	bool isPresent = false;
+	int target_index;
+	int new_nnzb;
+	for (int i = 0; i < vector->nnzb; ++i){ // This part needs to be optimized
+		if (vector->rows[i] == index){
+			isPresent = true;
+			target_index = i;
+			break;
+		}
+		if (vector->rows[i] > index){
+			target_index = i;
+			break;
+		}
+	}
 
+	// Case where the key is not already in the list	
+	if (!isPresent){
+		new_nnzb = vector->nnzb+1;
+		double *new_values = malloc(sizeof(double)*new_nnzb);
+		// Create new lists with the correct values
+		for (int i = 0; i < vector->nnzb+1; ++i){
+			if (i == target_index){
+				new_rows[i] = index; // Insertion
+				new_values[i] = value;
+			}
+			else if(i > target_index){
+				new_rows[i] = vector->rows[i-1];
+				new_values[i] = vector->values[i-1];
+			}
+			else {
+				new_rows[i] = vector->rows[i]; 
+				new_values[i] = vector->values[i]; 
+			}
+		}
+
+		// Setting the new values
+		int *error = realloc(vector->rows, new_nnzb);
+		error = realloc(vector->values, new_nnzb);
+		vector->nnzb = new_nnzb;
+		for (int i = 0; i < new_nnzb; ++i){
+			vector->rows[i] = new_rows[i];
+			vector->values[i] = new_values[i];
+		}
+	}
+	else {
+		vector->values[target_index] = value;
+	}
 }
 
 // Scales a CSR vector
