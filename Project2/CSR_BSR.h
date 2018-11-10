@@ -219,6 +219,14 @@ double csr_vector_get(csr_vector *vector, int index){
 	else return 0;
 }
 
+int csr_vector_set(csr_vector *vector, double value, int index){
+	if (index >= nector->nrows){
+		printf("!!! Index out of bounds.\n");
+		return -1;
+	}
+	/***/
+}
+
 // Scales a CSR vector
 void csr_vector_scale(csr_vector *vector, double scaling_factor){
 	for (int i = 0; i < vector->nnzb; ++i){
@@ -240,7 +248,7 @@ int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
 	else max_nnzb = Q->nnzb;
 
 	// Build the list of rows with non-zero values
-	int new_nnzb = merge_list(P->rows, Q->rows, adding_list, P->nnzb, Q->nnzb);
+	int new_nnzb = merge_sorted_lists(P->rows, Q->rows, adding_list, P->nnzb, Q->nnzb);
 
 	// Compute the sum
 	for (int i = 0; i < new_nnzb; ++i){
