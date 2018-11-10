@@ -36,12 +36,6 @@ typedef struct Param{
 Param readDat(char *filename)
 {
     FILE *file = fopen(filename, "r");
-    char* read = malloc(BUFFER_SIZE*sizeof(char));
-    if (read == NULL)
-    {
-        puts("Mem ERR0R !");
-        exit(1);
-    }
     Param parameters;
 
     if (file != NULL)
@@ -56,8 +50,6 @@ Param readDat(char *filename)
         puts("File ERR0R !");
         exit(1);
     }
-
-    free(read);
 
     return parameters;
 }
