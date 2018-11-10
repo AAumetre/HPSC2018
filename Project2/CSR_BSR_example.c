@@ -123,6 +123,15 @@ int main(int argc, char **argv){
 	for (int i = 0; i < 6; ++i){
 		printf("%.0f\n", csr_vector_get(&vec7, i));
 	}
+
+	// Setting a value
+	/*csr_vector_set(&vec5, 1, 3);
+	for (int i = 0; i < 6; ++i){
+		printf("%.0f\n", csr_vector_get(&vec5, i));
+	}
+	*/
+
+
 	csr_vector_free(&vec5);
 	csr_vector_free(&vec6);
 	csr_vector_free(&vec7);

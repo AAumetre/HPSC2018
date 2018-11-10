@@ -7,6 +7,11 @@
 *
 *	Under GNU General Public License 11/2018
 =======================================================================================*/
+#include <malloc.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "algorithms.h"
 /*=====================================================================================
@@ -44,9 +49,11 @@ struct bsr_matrix{
   void bsr_free(bsr_matrix *matrix);
 /*==============*/
   void csr_vector_init(csr_vector *vector, double *natural, int nrows);
+  void csr_vector_init_empty(csr_vector *vector, int nrows);
   double csr_vector_get(csr_vector *vector, int index);
   void csr_vector_scale(csr_vector *vector, double scale);
   int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
+  void csr_vector_set(csr_vector *vector, double value, int index);
   double csr_vector_scalar(csr_vector *P, csr_vector *Q);
   double csr_vector_norm(csr_vector *P);
   void csr_vector_free(csr_vector *vector);
@@ -204,6 +211,14 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	}
 }
 
+// Initialization function, sets all the variables and arrays from the structure
+void csr_vector_init_empty(csr_vector *vector, int nrows){
+	vector->nrows = nrows;
+	vector->nnzb = 0;
+	vector->rows = malloc(sizeof(int) * 0);
+	vector->values = calloc(sizeof(double), 0);
+}
+
 // TODO : implementation in O(ln(n)), taking the half each time
 double csr_vector_get(csr_vector *vector, int index){
 	if (index >= vector->nrows){
@@ -217,6 +232,16 @@ double csr_vector_get(csr_vector *vector, int index){
 	}
 	if (vector->rows[looking_index] == index)return vector->values[looking_index];
 	else return 0;
+}
+
+// Sets a value at a given index
+int csr_vector_set(csr_vector *vector, double value, int index){
+	if (index >= vector->nrows){
+		printf("!!! Index out of bounds.\n");
+		return -1;
+	}
+
+
 }
 
 // Scales a CSR vector
@@ -240,7 +265,7 @@ int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
 	else max_nnzb = Q->nnzb;
 
 	// Build the list of rows with non-zero values
-	int new_nnzb = merge_list(P->rows, Q->rows, adding_list, P->nnzb, Q->nnzb);
+	int new_nnzb = merge_sorted_lists(P->rows, Q->rows, adding_list, P->nnzb, Q->nnzb);
 
 	// Compute the sum
 	for (int i = 0; i < new_nnzb; ++i){

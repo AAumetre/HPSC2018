@@ -13,7 +13,7 @@
 =====================================================================================*/
 
 // Prototypes
-int merge_list(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
+int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
 
 
 /*=====================================================================================*/
@@ -21,7 +21,7 @@ int merge_list(int list_A[], int list_B[], int list_C[], int size_A, int size_B)
 
 // Merges two sorted lists and stores the result in a third one. Removes multiple occurences.
 // Return the length of the merged list.
-int merge_list(int list_A[], int list_B[], int list_C[], int size_A, int size_B) {
+int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B) {
 	int i=0, j=0, k=0;
 
       // Do the first iteration out of the loop to manage the case k=0
@@ -70,4 +70,14 @@ int merge_list(int list_A[], int list_B[], int list_C[], int size_A, int size_B)
 		}
 	}
 	return k;
+}
+
+// Inserts a key into a sorted list
+void sorted_list_insertion_int(int target[], int key, int target_size){
+
+}
+
+// Inserts a key at a given location, in a sorted list
+void sorted_list_insertion_index_int(int target[], int key, int index, int target_size){
+
 }

@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "CSR_BSR.h"
+
 int main(int argc, char const *argv[])
 {
   double h,m, L, Tmax, vx, vy, vz, D;
@@ -21,24 +23,18 @@ int main(int argc, char const *argv[])
 
   double initConcentration = 1; //g/m3
 
-  double *concentration = calloc(nodeX*nodeY*nodeZ, sizeof(double));
-
-  if (concentration == NULL) {
-    puts("Mem ERR0R !");
-    exit(1);
-  }
-
-  double *concentrationPrev = calloc(nodeX*nodeY*nodeZ, sizeof(double));
-
-  if (concentrationPrev == NULL) {
-    puts("Mem ERR0R !");
-    exit(1);
-  }
+  csr_vector c;
+  csr_vector c_;
+  csr_vector_init_empty(&c, nodeX*nodeY*nodeZ);
+  csr_vector_init_empty(&c_, nodeX*nodeY*nodeZ);
+  double *c_natural = malloc(sizeof(double)*nodeX*nodeY*nodeZ);
 
   size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
   printf("Index of center: %zu\n", centerIndex);
 
-  concentrationPrev[centerIndex] = initConcentration;
+  c_natural[centerIndex] = initConcentration;
+  
+  /*
   //for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
     //printf("%f ", concentration[i]);
 
@@ -72,7 +68,14 @@ int main(int argc, char const *argv[])
           int k = floor(index/(nodeX*nodeY));
           int j = floor((index-k*nodeX*nodeY)/nodeX);
           int i = index - k * nodeX * nodeY - j * nodeX;
-          concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] + m * D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(h,2) - m * vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*h) - m * vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*h) - m * vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*h);
+          concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] + 
+          m * D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+
+          k*nodeX*nodeY]+concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+
+          concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+
+          concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(h,2) - 
+          m * vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*h) -
+           m * vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*h) - 
+           m * vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*h);
         }
 
       isXbound++;
@@ -93,7 +96,7 @@ int main(int argc, char const *argv[])
   }
 
 
-
+  */
 
   return 0;
 }

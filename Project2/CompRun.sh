@@ -1,3 +1,3 @@
 clear
-gcc -o Main Main.c -lm -std=c99 -fopenmp
+gcc -o Main explicit.c -lm -std=c99 -fopenmp
 ./Main
