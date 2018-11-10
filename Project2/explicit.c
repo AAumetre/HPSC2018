@@ -14,10 +14,10 @@ int main(int argc, char const *argv[])
   vz = 0;
   D = 0.5;
 
-  size_t nodeX = 4;//(int)(L/h) + 1;
+  size_t nodeX = (int)(L/h) + 1;
   ///// !!!! vérifier pour les indices pairs le centre!
   size_t nodeY = nodeX, nodeZ =nodeX;
-  printf("%zu\n", nodeX);
+  printf("Number of nodes: %zu\n", nodeX);
 
   double initConcentration = 1; //g/m3
 
@@ -36,15 +36,18 @@ int main(int argc, char const *argv[])
   }
 
   size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
-  printf("%zu\n", centerIndex);
-  
+  printf("Index of center: %zu\n", centerIndex);
+
   concentrationPrev[centerIndex] = initConcentration;
   //for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
     //printf("%f ", concentration[i]);
 
-  for(size_t blabla = 0; blabla<3; blabla++)
+  size_t stopTime = Tmax/m;
+  printf("Stop time: %zu\n", stopTime);
+
+  for(size_t iteration = 0; iteration<= stopTime; iteration++)
   {
-    printf("interation %zu\n", blabla);
+    printf("interation %zu\n", iteration);
     //research for boundaries
     size_t isXbound = 0;
     for(size_t index = 0; index<nodeX*nodeY*nodeZ; index++)
@@ -77,13 +80,16 @@ int main(int argc, char const *argv[])
           isXbound = 0;
     }
 
-    for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
+    if (!(iteration%50))
     {
-      concentrationPrev[i] = concentration[i];
-      printf("%f ", concentration[i]);
-    }
+      for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
+      {
+        concentrationPrev[i] = concentration[i];
+        printf("%f ", concentration[i]);
+      }
 
-    printf("\n \n \n");
+      printf("\n \n \n");
+    }
   }
 
 
