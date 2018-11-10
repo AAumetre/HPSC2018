@@ -72,7 +72,7 @@ int main(int argc, char const *argv[])
   }
 
   for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
-    printf("%f ", concentration[i]);
+    printf("%.0f ", concentration[i]);
 
 
   return 0;
