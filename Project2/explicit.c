@@ -14,7 +14,7 @@ int main(int argc, char const *argv[])
   vz = 0;
   D = 0.5;
 
-  size_t nodeX = 3;//(int)(L/h) + 1;
+  size_t nodeX = (int)(L/h) + 1;
   ///// !!!! vérifier pour les indices pairs le centre!
   size_t nodeY = nodeX, nodeZ =nodeX;
   printf("%zu\n", nodeX);
@@ -50,20 +50,20 @@ int main(int argc, char const *argv[])
     int inStage0 = i-stage*nodeX*nodeY;
 
     if(isXbound==0)
-      {concentration[i]=5;}//juste pour tester
+      {}
     else if(isXbound==nodeX-1)
-      {concentration[i]=5;}
+      {}
     else if(inStage0<nodeX)
-      {concentration[i]=5;}
+      {}
     else if(inStage0>=nodeX*nodeY-nodeX-1)//vérifier les = !!!!!
-      {concentration[i]=5;}
+      {}
     else if(i<=nodeX*nodeY-1)
-      {concentration[i]=5;}
+      {}
     else if(i>=nodeX*nodeY*nodeZ-nodeX*nodeY)
-      {concentration[i]=5;}
+      {}
     else
       {//I am in the domain
-        //mettre la moche formule
+        concentration[] = concentrationPrev[] + m * D * (concentrationPrev[i+1]+concentrationPrev[j+1]+concentrationPrev[k+1]-6*concentrationPrev[]+concentrationPrev[i-1]+concentrationPrev[j-1]+concentrationPrev[k-1])/pow(h,2) - m * vx * (concentrationPrev[i+1]-concentrationPrev[i-1])/(2*h) - m * vy * (concentrationPrev[j+1]-concentrationPrev[j-1])/(2*h) - m * vz * (concentrationPrev[k+1]-concentrationPrev[k-1])/(2*h);
       }
 
     isXbound++;
