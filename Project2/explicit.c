@@ -44,10 +44,10 @@ int main(int argc, char const *argv[])
 
   //research for boundaries
   size_t isXbound = 0;
-  for(size_t i = 0; i<nodeX*nodeY*nodeZ; i++)
+  for(size_t index = 0; index<nodeX*nodeY*nodeZ; index++)
   {
-    int stage = floor(i/(nodeX*nodeY));
-    int inStage0 = i-stage*nodeX*nodeY;
+    int stage = floor(index/(nodeX*nodeY));
+    int inStage0 = index-stage*nodeX*nodeY;
 
     if(isXbound==0)
       {}
@@ -57,13 +57,16 @@ int main(int argc, char const *argv[])
       {}
     else if(inStage0>=nodeX*nodeY-nodeX-1)//vérifier les = !!!!!
       {}
-    else if(i<=nodeX*nodeY-1)
+    else if(index<=nodeX*nodeY-1)
       {}
-    else if(i>=nodeX*nodeY*nodeZ-nodeX*nodeY)
+    else if(index>=nodeX*nodeY*nodeZ-nodeX*nodeY)
       {}
     else
       {//I am in the domain
-        concentration[] = concentrationPrev[] + m * D * (concentrationPrev[i+1]+concentrationPrev[j+1]+concentrationPrev[k+1]-6*concentrationPrev[]+concentrationPrev[i-1]+concentrationPrev[j-1]+concentrationPrev[k-1])/pow(h,2) - m * vx * (concentrationPrev[i+1]-concentrationPrev[i-1])/(2*h) - m * vy * (concentrationPrev[j+1]-concentrationPrev[j-1])/(2*h) - m * vz * (concentrationPrev[k+1]-concentrationPrev[k-1])/(2*h);
+        int k = floor(index/(nodeX*nodeY));
+        int j = floor((index-k*nodeX*nodeY)/nodeX);
+        int i = index - k * nodeX * nodeY - j * nodeX;
+        concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] + m * D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(h,2) - m * vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*h) - m * vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*h) - m * vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*h);
       }
 
     isXbound++;
