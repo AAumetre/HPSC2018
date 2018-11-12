@@ -56,7 +56,7 @@ struct bsr_matrix{
   double csr_vector_get(csr_vector *vector, int index);
   void csr_vector_scale(csr_vector *vector, double scale);
   int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
-  void csr_vector_set(csr_vector *vector, double value, int index);
+  int csr_vector_set(csr_vector *vector, double value, int index);
   double csr_vector_scalar(csr_vector *P, csr_vector *Q);
   double csr_vector_norm(csr_vector *P);
   void csr_vector_free(csr_vector *vector);
@@ -218,8 +218,8 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 void csr_vector_init_empty(csr_vector *vector, int nrows){
 	vector->nrows = nrows;
 	vector->nnzb = 0;
-	vector->rows = malloc(sizeof(int) * 0);
-	vector->values = calloc(sizeof(double), 0);
+	vector->rows = malloc(sizeof(int)*0);
+	vector->values = malloc(sizeof(double)*0);
 }
 
 // TODO : implementation in O(ln(n)), taking the half each time
@@ -248,7 +248,7 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	// Does the key insertion in rows and gives the index at which the value was inserted
 	int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
 	bool isPresent = false;
-	int target_index;
+	int target_index = 0;
 	int new_nnzb;
 	for (int i = 0; i < vector->nnzb; ++i){ // This part needs to be optimized
 		if (vector->rows[i] == index){
@@ -283,14 +283,25 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 		}
 
 		// Setting the new values
-		int *error = realloc(vector->rows, new_nnzb);
-		error = realloc(vector->values, new_nnzb);
+		printf("\nNew nnzb: %d", new_nnzb);
+		int *error_rows = realloc(vector->rows, new_nnzb*sizeof(int));
+		int *error_values = realloc(vector->values, new_nnzb*sizeof(double));
+		if (error_rows == NULL){
+			printf("Error in rows allocation.\n");
+			exit(0);
+		}
+		if (error_values == NULL){
+			printf("Error in values allocation.\n");
+			exit(0);
+		}
 		vector->nnzb = new_nnzb;
 		for (int i = 0; i < new_nnzb; ++i){
 			vector->rows[i] = new_rows[i];
 			vector->values[i] = new_values[i];
 		}
 	}
+
+	// Case where the key is present, only updating the value
 	else {
 		vector->values[target_index] = value;
 	}
