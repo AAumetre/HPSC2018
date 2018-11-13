@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "CSR_BSR.h"
+
 int main(int argc, char const *argv[])
 {
   double h,m, L, Tmax, vx, vy, vz, D;
@@ -44,8 +46,11 @@ int main(int argc, char const *argv[])
 
   size_t stopTime = Tmax/m;
   printf("Stop time: %zu\n", stopTime);
+  size_t interation = 0;
+  bool onBoundary = false;
+  bool valueOnBoundary= false;
 
-  for(size_t iteration = 0; iteration<= stopTime; iteration++)
+  while (iteration <= stopTime && !valueOnBoudary)
   {
     printf("interation %zu\n", iteration);
     //research for boundaries
@@ -80,6 +85,10 @@ int main(int argc, char const *argv[])
            m * vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*h) - 
            m * vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*h) - 
            m * vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*h);
+          onBoudary = isXbound == nodeX-2 || isXbound != 1 || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || inStage0 >= nodeY*nodeY-2*nodeX-1 || index<=2*nodeX*nodeY-2 || index >= nodeX*nodeY*nodeZ - 2*nodeX*nodeY;
+          if (onBoudary  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0){
+            valueOnBoudary=true;
+          }
         }
 
       isXbound++;
@@ -97,6 +106,7 @@ int main(int argc, char const *argv[])
 
       printf("\n \n \n");
     }
+    ++iteration;
   }
 
 
