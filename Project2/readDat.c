@@ -61,7 +61,7 @@ Param readDat(char *filename)
 * Main function reading a dat file
 * ----------------------------------------------------------------------------*/
 
-int main(int argc, char *argv[])
+/*int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
@@ -74,4 +74,4 @@ int main(int argc, char *argv[])
     Param parameters = readDat(argv[1]);
 
     return 0;
-}
+}*/

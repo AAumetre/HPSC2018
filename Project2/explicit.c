@@ -2,24 +2,77 @@
 #include <math.h>
 #include <stdlib.h>
 
-int main(int argc, char const *argv[])
-{
-  double h,m, L, Tmax, vx, vy, vz, D;
-  h = 0.1;
-  m = 0.001;
-  L = 1;
-  Tmax = 1;
-  vx = 0;
-  vy = -1;
-  vz = 0;
-  D = 0.5;
+/* ----------------------------------------------------------------------------*
+* Structure: Param
+* -----------------------------------------------------------------------------*
+* @ param:  h             double          spatial step [m]
+*           m             double          time step [s]
+*           L             double          space domain size [m]
+*           Tmax          double          time domain size [s]
+*           vx            double          horizontal velocity [m/s]
+*           vy            double          vertical velocity [m/s]
+*           vz            double          z-axis velocity [m/s]
+*           D             double          diffusion coefficient [m^2/s]
+*           S             unsigned int
+*           rthreshold    double
+* -----------------------------------------------------------------------------*
+* Structure the parameters defining the domain
+* ----------------------------------------------------------------------------*/
+typedef struct Param{
+  double h,m, L, Tmax, vx, vy, vz, D, rthreshold;
+  unsigned int S;
+} Param;
 
-  size_t nodeX = (int)(L/h) + 1;
+/* ----------------------------------------------------------------------------*
+* function: readDat
+* -----------------------------------------------------------------------------*
+* @ param:  filename   char*            pointer on the dat file path to open
+* @ return: Param      parameters       structure containing the parameters
+* -----------------------------------------------------------------------------*
+* Function reading a given dat file and returning a structure containing its
+* data
+* ----------------------------------------------------------------------------*/
+Param readDat(char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    Param parameters;
+
+    if (file != NULL)
+    {
+        fscanf(file, "%lf %lf %lf %lf %lf %lf %lf %lf %u %lf", &parameters.h, &parameters.m, &parameters.L, &parameters.Tmax, &parameters.vx, &parameters.vy, &parameters.vz, &parameters.D, &parameters.S, &parameters.rthreshold);
+        printf("The parameters are : %lf %lf %lf %lf %lf %lf %lf %lf %u %lf", parameters.h, parameters.m, parameters.L, parameters.Tmax, parameters.vx, parameters.vy, parameters.vz, parameters.D, parameters.S, parameters.rthreshold);
+
+        fclose(file);
+    }
+    else
+    {
+        puts("File ERR0R !");
+        exit(1);
+    }
+
+    return parameters;
+}
+
+
+int main(int argc, char *argv[])
+{
+
+  if (argc != 2)
+  {
+    printf("Wrong arguments\n");
+    printf("Please use the function with ./exe param.dat\n");
+    return 1;
+  }
+
+  printf("Reading file %s ...\n", argv[1]);
+  Param parameters = readDat(argv[1]);
+
+  size_t nodeX = (int)(parameters.L/parameters.h) + 1;
   ///// !!!! vérifier pour les indices pairs le centre!
   size_t nodeY = nodeX, nodeZ =nodeX;
   printf("Number of nodes: %zu\n", nodeX);
 
-  double initConcentration = 1; //g/m3
+  double initConcentration = 1; //[g/m3]
 
   double *concentration = calloc(nodeX*nodeY*nodeZ, sizeof(double));
 
@@ -42,7 +95,7 @@ int main(int argc, char const *argv[])
   //for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
     //printf("%f ", concentration[i]);
 
-  size_t stopTime = Tmax/m;
+  size_t stopTime = parameters.Tmax/parameters.m;
   printf("Stop time: %zu\n", stopTime);
 
   for(size_t iteration = 0; iteration<= stopTime; iteration++)
@@ -73,13 +126,13 @@ int main(int argc, char const *argv[])
           int j = floor((index-k*nodeX*nodeY)/nodeX);
           int i = index - k * nodeX * nodeY - j * nodeX;
           concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] +
-           m * D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+
+           parameters.m * parameters.D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+
             concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+
             concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+
-            concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(h,2) -
-           m * vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*h) - 
-           m * vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*h) - 
-           m * vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*h);
+            concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
+           parameters.m * parameters.vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+           parameters.m * parameters.vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+           parameters.m * parameters.vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
         }
 
       isXbound++;
