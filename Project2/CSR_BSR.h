@@ -1,5 +1,5 @@
 /*=======================================================================================
-*	This code was written by: 
+*	This code was written by:
 *								Antonin Aumètre - antonin.aumetre@gmail.com
 *								Céline Moureau -  cemoureau@gmail.com
 *	For: High Performance Scientific course at ULiège, 2018-19
@@ -7,13 +7,13 @@
 *
 *	Under GNU General Public License 11/2018
 =======================================================================================*/
-#include <malloc.h>
+//#include <malloc.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <malloc.h>
+//#include <malloc.h>
 #include <string.h>
 
 #include "algorithms.h"
@@ -23,7 +23,7 @@
 
 // Structure
 // CSR & BSR reference: https://medium.com/@jmaxg3/101-ways-to-store-a-sparse-matrix-c7f2bf15a229
-typedef struct bsr_matrix bsr_matrix; 
+typedef struct bsr_matrix bsr_matrix;
 struct bsr_matrix{
 	int nrows;
 	int ncolumns;
@@ -35,7 +35,7 @@ struct bsr_matrix{
   	double *values;
   };
 
-  typedef struct csr_vector csr_vector; 
+  typedef struct csr_vector csr_vector;
   struct csr_vector{
   	int nrows;
   	int nnzb; // # of non-zero values
@@ -141,7 +141,7 @@ int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size
 					if (natural[i+k + size*(j+l)] != 0){
 						empty = false;
 						break;
-					} 
+					}
 				}
 				if (!empty)break;
 			}
@@ -262,7 +262,7 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 		}
 	}
 
-	// Case where the key is not already in the list	
+	// Case where the key is not already in the list
 	if (!isPresent){
 		new_nnzb = vector->nnzb+1;
 		double *new_values = malloc(sizeof(double)*new_nnzb);
@@ -277,8 +277,8 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 				new_values[i] = vector->values[i-1];
 			}
 			else {
-				new_rows[i] = vector->rows[i]; 
-				new_values[i] = vector->values[i]; 
+				new_rows[i] = vector->rows[i];
+				new_values[i] = vector->values[i];
 			}
 		}
 
@@ -381,7 +381,7 @@ int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_re
 		printf("!!! Matrix and vector dimensions mismatch.\n");
 		return -1;
 	}
-	
+
 	double *row_vector = malloc(sizeof(double)*matrix->nrows);
 	double *result_vector = malloc(sizeof(double)*matrix->nrows);
 

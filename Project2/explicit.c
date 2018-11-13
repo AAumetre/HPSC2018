@@ -41,7 +41,7 @@ Param readDat(char *filename)
     if (file != NULL)
     {
         fscanf(file, "%lf %lf %lf %lf %lf %lf %lf %lf %u %lf", &parameters.h, &parameters.m, &parameters.L, &parameters.Tmax, &parameters.vx, &parameters.vy, &parameters.vz, &parameters.D, &parameters.S, &parameters.rthreshold);
-        printf("The parameters are : %lf %lf %lf %lf %lf %lf %lf %lf %u %lf", parameters.h, parameters.m, parameters.L, parameters.Tmax, parameters.vx, parameters.vy, parameters.vz, parameters.D, parameters.S, parameters.rthreshold);
+        printf("The parameters are : h %lf  m %lf  L %lf Tmax %lf %lf %lf %lf %lf %u %lf", parameters.h, parameters.m, parameters.L, parameters.Tmax, parameters.vx, parameters.vy, parameters.vz, parameters.D, parameters.S, parameters.rthreshold);
 
         fclose(file);
     }
@@ -98,11 +98,11 @@ int main(int argc, char *argv[])
 
   size_t stopTime = parameters.Tmax/parameters.m;
   printf("Stop time: %zu\n", stopTime);
-  size_t interation = 0;
+  size_t iteration = 0;
   bool onBoundary = false;
   bool valueOnBoundary= false;
 
-  while (iteration <= stopTime && !valueOnBoudary)
+  while (iteration <= stopTime && !valueOnBoundary)
   {
     printf("interation %zu\n", iteration);
     //research for boundaries
@@ -138,9 +138,10 @@ int main(int argc, char *argv[])
            parameters.m * parameters.vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
            parameters.m * parameters.vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
 
-          onBoudary = isXbound == nodeX-2 || isXbound != 1 || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || inStage0 >= nodeY*nodeY-2*nodeX-1 || index<=2*nodeX*nodeY-2 || index >= nodeX*nodeY*nodeZ - 2*nodeX*nodeY;
-          if (onBoudary  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0){
-            valueOnBoudary=true;
+          onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1) || (index<=2*nodeX*nodeY-2) || (index >= nodeX*nodeY*nodeZ - 2*nodeX*nodeY));
+          if (onBoundary  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0){
+            printf("coucou");
+            valueOnBoundary=true;
           }
 
         }
