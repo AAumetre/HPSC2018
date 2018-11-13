@@ -34,8 +34,7 @@ int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int
 		++j;
 	}
 	++k;
-
-      // Main loop
+    // Main loop
 	while (i < size_A && j < size_B) {
 		if (list_A[i] <= list_B[j]) {
 			list_C[k] = list_A[i];
@@ -51,7 +50,6 @@ int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int
 			++j;
 		}
 	}
-	
     // If one list is exhausted, fill C with the remains of the other
 	if (i < size_A) {
 		for (int p = i; p < size_A; ++p) {

@@ -61,8 +61,7 @@ Param readDat(char *filename)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 2)
-  {
+  if (argc != 2) {
     printf("Wrong arguments\n");
     printf("Please use the function with ./exe param.dat\n");
     return 1;
@@ -72,9 +71,8 @@ int main(int argc, char *argv[])
   Param parameters = readDat(argv[1]);
 
   size_t nodeX = (int)(parameters.L/parameters.h) + 1;
-  ///// !!!! vérifier pour les indices pairs le centre!
   size_t nodeY = nodeX, nodeZ =nodeX;
-  printf("Number of nodes: %zu\n", nodeX);
+  printf("\nNumber of nodes: %zu\n", nodeX);
 
   size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
   printf("Index of center: %zu\n", centerIndex);
@@ -87,36 +85,23 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   char bonusSlice=0;
-  if (nodeZ%rank)
-    bonusSlice = 1;
-  size_t thicknessMPI = (int)(nodeZ/rank);
+  
+  //if (nodeZ%rank) bonusSlice = 1;
+  size_t thicknessMPI = (int)(nodeZ/world_size);
+  if (rank == world_size-1) thicknessMPI++;
 
-  if (rank == world_size-1)
-    thicknessMPI++;
-
-  //thicknessMPI*rank + rank
-
-  //size_t klocal = k - rank*thicknessMPI;
   size_t kCenter = floor(centerIndex/(nodeX*nodeY));
   size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
-
   double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
+  double *c_ = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
-  if (concentration == NULL) {
+  if (concentration == NULL || c_ == NULL) {
     puts("Mem ERR0R !");
     exit(1);
   }
-
-  double *concentrationPrev = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-
-  if (concentrationPrev == NULL) {
-    puts("Mem ERR0R !");
-    exit(1);
-  }
-
 
   if (rank == floor(world_size/2))
-    concentrationPrev[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
+    c_[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
 
   size_t stopTime = parameters.Tmax/parameters.m;
   printf("Stop time: %zu\n", stopTime);
@@ -147,24 +132,18 @@ int main(int argc, char *argv[])
         int k = floor(index/(nodeX*nodeY));
         int j = floor((index-k*nodeX*nodeY)/nodeX);
         int i = index - k * nodeX * nodeY - j * nodeX;
-        concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] +
-         parameters.m * parameters.D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+
-          concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+
-          concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+
-          concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
-         parameters.m * parameters.vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-         parameters.m * parameters.vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-         parameters.m * parameters.vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
+        concentration[i+j*nodeX+k*nodeX*nodeY] = c_[i+j*nodeX+k*nodeX*nodeY] +
+         parameters.m * parameters.D * (c_[i+1+j*nodeX+k*nodeX*nodeY]+c_[i+(j+1)*nodeX+k*nodeX*nodeY]+
+          c_[i+j*nodeX+(k+1)*nodeX*nodeY]-6*c_[i+j*nodeX+k*nodeX*nodeY]+
+          c_[i-1+j*nodeX+k*nodeX*nodeY]+c_[i+(j-1)*nodeX+k*nodeX*nodeY]+
+          c_[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
+         parameters.m * parameters.vx * (c_[i+1+j*nodeX+k*nodeX*nodeY]-c_[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+         parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+k*nodeX*nodeY]-c_[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+         parameters.m * parameters.vz * (c_[i+j*nodeX+(k+1)*nodeX*nodeY]-c_[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
 
-         if (rank==0 || rank ==world_size-1)
-           onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
+         if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
          onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
-         if ((onBoundary||onZBoundary)  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0)
-         {
-           printf("coucou");
-           valueOnBoundary=true;
-         }
-
+         if ((onBoundary||onZBoundary)  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0) valueOnBoundary=true;
         }
 
       isXbound++;
@@ -175,27 +154,34 @@ int main(int argc, char *argv[])
 
     //passer aux voisins
     //find klocal = 0 et = max
-    for (size_t index = 0; index < nodeX*nodeY; index ++)
-    {
-      int klocal = 0;
-      int j = floor((index-klocal*nodeX*nodeY)/nodeX);
-      int i = index - klocal * nodeX * nodeY - j * nodeX;
-      send(concentration[i+j*nodeX+klocal*nodeX*nodeY]);
+    int *commList = getCommListSlices(world_size);
+    for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
+      // Get sender commList[commIndex] & receiver commList[commIndex+1]
+      printf("Sender: %d to %d\n", commList[commIndex], commList[commIndex+1]);
+        for (size_t index = 0; index < nodeX*nodeY; index ++)
+        {
+          int klocal = 0;
+          int j = floor((index-klocal*nodeX*nodeY)/nodeX);
+          int i = index - klocal * nodeX * nodeY - j * nodeX;
+          MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+          MPI_Recv(&number, 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      klocal = thicknessMPI-1;//max
-      send(concentration[i+j*nodeX+klocal*nodeX*nodeY]);
-    }
-
-    if (!(iteration%500))
+          /*klocal = thicknessMPI-1;//max
+          MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+          MPI_Recv(&number, 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+          */
+        }
+      }
+    /*if (!(iteration%500))
     {
       for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
       {
-        concentrationPrev[i] = concentration[i];
+        c_[i] = concentration[i];
         printf("%f ", concentration[i]);
       }
 
       printf("\n \n \n");
-    }
+    }*/
     ++iteration;
   }
 
