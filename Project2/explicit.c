@@ -2,6 +2,10 @@
 #include <math.h>
 #include <stdlib.h>
 #include "CSR_BSR.h"
+#include <mpi.h>
+
+
+#define initConcentration 1 //[g/m3]
 
 /* ----------------------------------------------------------------------------*
 * Structure: Param
@@ -73,26 +77,47 @@ int main(int argc, char *argv[])
   size_t nodeY = nodeX, nodeZ =nodeX;
   printf("Number of nodes: %zu\n", nodeX);
 
-  double initConcentration = 1; //[g/m3]
+  size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
+  printf("Index of center: %zu\n", centerIndex);
 
-  double *concentration = calloc(nodeX*nodeY*nodeZ, sizeof(double));
+
+  MPI_Init();
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  char bonusSlice=0;
+  if (nodeZ%rank)
+    bonusSlice = 1;
+  size_t thicknessMPI = (int)(nodeZ/rank);
+
+  if (rank == world_size-1)
+    thicknessMPI++;
+
+  //thicknessMPI*rank + rank
+
+  //size_t klocal = k - rank*thicknessMPI;
+  size_t kCenter = floor(centerIndex/(nodeX*nodeY));
+  size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
+
+  double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
   if (concentration == NULL) {
     puts("Mem ERR0R !");
     exit(1);
   }
 
-  double *concentrationPrev = calloc(nodeX*nodeY*nodeZ, sizeof(double));
+  double *concentrationPrev = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
   if (concentrationPrev == NULL) {
     puts("Mem ERR0R !");
     exit(1);
   }
 
-  size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
-  printf("Index of center: %zu\n", centerIndex);
 
-  concentrationPrev[centerIndex] = initConcentration;
+  if (rank == floor(world_size/2))
+    concentrationPrev[klocalCenter] = initConcentration;
   //for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
     //printf("%f ", concentration[i]);
 
@@ -100,6 +125,7 @@ int main(int argc, char *argv[])
   printf("Stop time: %zu\n", stopTime);
   size_t iteration = 0;
   bool onBoundary = false;
+  bool onZBoundary = false;
   bool valueOnBoundary= false;
 
   while (iteration <= stopTime && !valueOnBoundary)
@@ -107,42 +133,40 @@ int main(int argc, char *argv[])
     printf("interation %zu\n", iteration);
     //research for boundaries
     size_t isXbound = 0;
-    for(size_t index = 0; index<nodeX*nodeY*nodeZ; index++)
+    size_t index = 0;
+    if (rank == 0)
+      index=nodeX*nodeY;
+    size_t stopIndex = nodeX*nodeY*thicknessMPI;
+    if (rank == world_size-1)
+      stopIndex -=nodeY*nodeX;
+
+    for(index; index<stopIndex; index++)
     {
       int stage = floor(index/(nodeX*nodeY));
       int inStage0 = index-stage*nodeX*nodeY;
 
-      if(isXbound==0)
-        {}
-      else if(isXbound==nodeX-1)
-        {}
-      else if(inStage0<nodeX)
-        {}
-      else if(inStage0>=nodeX*nodeY-nodeX-1)//vérifier les = !!!!!
-        {}
-      else if(index<=nodeX*nodeY-1)
-        {}
-      else if(index>=nodeX*nodeY*nodeZ-nodeX*nodeY)
-        {}
-      else
-        {//I am in the domain
-          int k = floor(index/(nodeX*nodeY));
-          int j = floor((index-k*nodeX*nodeY)/nodeX);
-          int i = index - k * nodeX * nodeY - j * nodeX;
-          concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] +
-           parameters.m * parameters.D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+
-            concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+
-            concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+
-            concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
-           parameters.m * parameters.vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-           parameters.m * parameters.vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-           parameters.m * parameters.vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
+      if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX-1))
+      {//I am in the domain
+        int k = floor(index/(nodeX*nodeY));
+        int j = floor((index-k*nodeX*nodeY)/nodeX);
+        int i = index - k * nodeX * nodeY - j * nodeX;
+        concentration[i+j*nodeX+k*nodeX*nodeY] = concentrationPrev[i+j*nodeX+k*nodeX*nodeY] +
+         parameters.m * parameters.D * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]+
+          concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-6*concentrationPrev[i+j*nodeX+k*nodeX*nodeY]+
+          concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY]+concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY]+
+          concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
+         parameters.m * parameters.vx * (concentrationPrev[i+1+j*nodeX+k*nodeX*nodeY]-concentrationPrev[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+         parameters.m * parameters.vy * (concentrationPrev[i+(j+1)*nodeX+k*nodeX*nodeY]-concentrationPrev[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+         parameters.m * parameters.vz * (concentrationPrev[i+j*nodeX+(k+1)*nodeX*nodeY]-concentrationPrev[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
 
-          onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1) || (index<=2*nodeX*nodeY-2) || (index >= nodeX*nodeY*nodeZ - 2*nodeX*nodeY));
-          if (onBoundary  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0){
-            printf("coucou");
-            valueOnBoundary=true;
-          }
+         if (rank==0 || rank ==world_size-1)
+           onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
+         onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
+         if ((onBoundary||onZBoundary)  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0)
+         {
+           printf("coucou");
+           valueOnBoundary=true;
+         }
 
         }
 
