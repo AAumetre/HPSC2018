@@ -61,7 +61,6 @@ Param readDat(char *filename)
 
 int main(int argc, char *argv[])
 {
-
   if (argc != 2)
   {
     printf("Wrong arguments\n");
@@ -81,7 +80,7 @@ int main(int argc, char *argv[])
   printf("Index of center: %zu\n", centerIndex);
 
 
-  MPI_Init();
+  MPI_Init(NULL, NULL);
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int world_size;
@@ -202,6 +201,6 @@ int main(int argc, char *argv[])
 
 
 
-
+MPI_Finalize();
   return 0;
 }

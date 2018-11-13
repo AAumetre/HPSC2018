@@ -14,6 +14,7 @@
 
 // Prototypes
 int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
+int * getCommListSlices(unsigned int size);
 
 /*=====================================================================================*/
 // Implementation
@@ -69,4 +70,34 @@ int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int
 		}
 	}
 	return k;
+}
+
+// Creates a list of the directionnal communications to be done
+int * getCommListSlices(unsigned int size){
+	int *list = malloc(sizeof(int)*4*(size-1));
+
+	int max_value_begin;
+	if (size%2 == 0) max_value_begin = size;
+	else max_value_begin = size - 1;
+
+	for (int i = 0; i < max_value_begin; ++i){
+		list[i] = i;
+	}
+	for (int i = 0; i < max_value_begin; ++i){ // Permutations
+		if (i%2 == 0) list[max_value_begin+i] = list[i+1];
+		else list[max_value_begin+i] = list[i-1];
+	}
+
+	int max_value;
+	if (size%2 == 0) max_value = size - 1;
+	else max_value = size;
+	for (int i = 1; i < max_value; ++i){
+		list[2*max_value_begin+i-1] = i;
+	}
+	for (int i = 0; i < max_value-1; ++i){ // Permutations
+		if (i%2 ==0) list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin+1+i]; 
+		else list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin-1+i];
+	}
+
+	return list;
 }
