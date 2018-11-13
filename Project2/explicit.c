@@ -117,9 +117,7 @@ int main(int argc, char *argv[])
 
 
   if (rank == floor(world_size/2))
-    concentrationPrev[klocalCenter] = initConcentration;
-  //for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
-    //printf("%f ", concentration[i]);
+    concentrationPrev[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
 
   size_t stopTime = parameters.Tmax/parameters.m;
   printf("Stop time: %zu\n", stopTime);
@@ -173,6 +171,20 @@ int main(int argc, char *argv[])
       isXbound++;
       if(isXbound==nodeX)
           isXbound = 0;
+
+    }
+
+    //passer aux voisins
+    //find klocal = 0 et = max
+    for (size_t index = 0; index < nodeX*nodeY; index ++)
+    {
+      int klocal = 0;
+      int j = floor((index-klocal*nodeX*nodeY)/nodeX);
+      int i = index - klocal * nodeX * nodeY - j * nodeX;
+      send(concentration[i+j*nodeX+klocal*nodeX*nodeY]);
+
+      klocal = thicknessMPI-1;//max
+      send(concentration[i+j*nodeX+klocal*nodeX*nodeY]);
     }
 
     if (!(iteration%500))
