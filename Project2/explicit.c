@@ -84,6 +84,15 @@ int main(int argc, char *argv[])
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+
+  /*
+  // Example for the getCommListSlices() function
+  int *commList0 = getCommListSlices(20);
+  for (int i = 0; i < 4*19; i+=2)
+  {
+    printf("%d %d\n", commList0[i], commList0[i+1]);
+  }*/
+
   char bonusSlice=0;
   
   //if (nodeZ%rank) bonusSlice = 1;
@@ -93,7 +102,7 @@ int main(int argc, char *argv[])
   size_t kCenter = floor(centerIndex/(nodeX*nodeY));
   size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
   double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-  double *c_ = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
+  double *c_ = calloc(nodeX*nodeY*(thicknessMPI+2), sizeof(double)); // +2 to store the values coming from the previous and next slices
 
   if (concentration == NULL || c_ == NULL) {
     puts("Mem ERR0R !");
@@ -112,7 +121,7 @@ int main(int argc, char *argv[])
 
   while (iteration <= stopTime && !valueOnBoundary)
   {
-    printf("interation %zu\n", iteration);
+    //printf("interation %zu\n", iteration);
     //research for boundaries
     size_t isXbound = 0;
     size_t index = 0;
@@ -152,25 +161,26 @@ int main(int argc, char *argv[])
 
     }
 
-    //passer aux voisins
-    //find klocal = 0 et = max
     int *commList = getCommListSlices(world_size);
     for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
       // Get sender commList[commIndex] & receiver commList[commIndex+1]
-      printf("Sender: %d to %d\n", commList[commIndex], commList[commIndex+1]);
-        for (size_t index = 0; index < nodeX*nodeY; index ++)
+      bool isSender = false;
+      bool isReceiver = false;
+      if (rank == commList[commIndex]) isSender = true;
+      if (rank == commList[commIndex+1]) isReceiver = true;
+      printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
+      // Need a if here, depending on the rank so that everyone knows what to do asynchronously
+        /*for (size_t index = 0; index < nodeX*nodeY; index ++)
         {
           int klocal = 0;
           int j = floor((index-klocal*nodeX*nodeY)/nodeX);
           int i = index - klocal * nodeX * nodeY - j * nodeX;
-          MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
-          MPI_Recv(&number, 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-          /*klocal = thicknessMPI-1;//max
-          MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
-          MPI_Recv(&number, 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          */
-        }
+          // Send the lower boundary values
+          MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD);
+          // Get the upper boundary values
+          klocal = thicknessMPI-1;//max
+          MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }*/
       }
     /*if (!(iteration%500))
     {
@@ -181,10 +191,9 @@ int main(int argc, char *argv[])
       }
 
       printf("\n \n \n");
-    }*/
+    } */
     ++iteration;
   }
-
 
 
 MPI_Finalize();
