@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 	bool onZBoundary = false;
 	bool valueOnBoundary= false;
 
-	/*while (iteration <= stopTime && !valueOnBoundary)
+	while (iteration <= stopTime && !valueOnBoundary)
 	{
 		//printf("iteration %zu\n", iteration);
 		//research for boundaries
@@ -145,11 +145,10 @@ int main(int argc, char *argv[])
 			}
 
 			printf("\n \n \n");
-		} //Comment here
+		} */
 		++iteration;
 	}
 
-*/
 	MPI_Finalize();
 	return 0;
 }

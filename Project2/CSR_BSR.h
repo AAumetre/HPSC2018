@@ -7,13 +7,12 @@
 *
 *	Under GNU General Public License 11/2018
 =======================================================================================*/
-//#include <malloc.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-//#include <malloc.h>
 #include <string.h>
 
 #include "algorithms.h"
@@ -27,41 +26,41 @@ typedef struct bsr_matrix bsr_matrix;
 struct bsr_matrix{
 	int nrows;
 	int ncolumns;
-  	int block_size; // evenly divides nrows and ncolumns
-  	int nnzb; // # of non-zero *blocks*
-  	int n_elements_per_block;
-  	unsigned int *block_row_offsets;
-  	unsigned int *block_columns;
-  	double *values;
-  };
+	int block_size; // evenly divides nrows and ncolumns
+	int nnzb; // # of non-zero *blocks*
+	int n_elements_per_block;
+	unsigned int *block_row_offsets;
+	unsigned int *block_columns;
+	double *values;
+};
 
-  typedef struct csr_vector csr_vector;
-  struct csr_vector{
-  	int nrows;
-  	int nnzb; // # of non-zero values
-  	unsigned int *rows;
-  	double *values;
-  };
+typedef struct csr_vector csr_vector;
+struct csr_vector{
+	int nrows;
+	int nnzb; // # of non-zero values
+	unsigned int *rows;
+	double *values;
+};
 
 /*=====================================================================================*/
 
 // Prototypes
-  void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
-  double bsr_get(bsr_matrix *matrix, int i, int j);
-  int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
-  void bsr_free(bsr_matrix *matrix);
+void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
+double bsr_get(bsr_matrix *matrix, int i, int j);
+int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
+void bsr_free(bsr_matrix *matrix);
 /*==============*/
-  void csr_vector_init(csr_vector *vector, double *natural, int nrows);
-  void csr_vector_init_empty(csr_vector *vector, int nrows);
-  double csr_vector_get(csr_vector *vector, int index);
-  void csr_vector_scale(csr_vector *vector, double scale);
-  int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
-  int csr_vector_set(csr_vector *vector, double value, int index);
-  double csr_vector_scalar(csr_vector *P, csr_vector *Q);
-  double csr_vector_norm(csr_vector *P);
-  void csr_vector_free(csr_vector *vector);
+void csr_vector_init(csr_vector *vector, double *natural, int nrows);
+void csr_vector_init_empty(csr_vector *vector, int nrows);
+double csr_vector_get(csr_vector *vector, int index);
+void csr_vector_scale(csr_vector *vector, double scale);
+int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
+int csr_vector_set(csr_vector *vector, double value, int index);
+double csr_vector_scalar(csr_vector *P, csr_vector *Q);
+double csr_vector_norm(csr_vector *P);
+void csr_vector_free(csr_vector *vector);
 /*==============*/
-  int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
+int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
 
 
 /*=====================================================================================*/
@@ -69,47 +68,46 @@ struct bsr_matrix{
 
 /*============== BSR Matrix functions ===================*/
 // Initialization function, sets all the variables and arrays from the structure
-  void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb){
-  	matrix->nrows = nrows;
-  	matrix->ncolumns = ncolumns;
-  	matrix->block_size = block_size;
-  	matrix->nnzb = nnzb;
-  	matrix->n_elements_per_block = block_size*block_size;
+void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb){
+	matrix->nrows = nrows;
+	matrix->ncolumns = ncolumns;
+	matrix->block_size = block_size;
+	matrix->nnzb = nnzb;
+	matrix->n_elements_per_block = block_size*block_size;
 
-  	matrix->block_row_offsets = malloc(sizeof(int) * (nrows / block_size + 1));
-  	matrix->block_columns = malloc(sizeof(int) * nnzb);
-  	matrix->values = malloc(sizeof(double) * nnzb*block_size*block_size);
-  }
+	matrix->block_row_offsets = malloc(sizeof(int) * (nrows / block_size + 1));
+	matrix->block_columns = malloc(sizeof(int) * nnzb);
+	matrix->values = malloc(sizeof(double) * nnzb*block_size*block_size);
+}
 
 // Fetches a value from the BSR matrix
 // TODO : Simplify this once it's 100% working
-  double bsr_get(bsr_matrix *matrix, int i_, int j_) {
-   // Find the corresponding block
-  int i = floor(i_/matrix->block_size); // Block-row index
-  int j = floor(j_/matrix->block_size); // Block-column index
+double bsr_get(bsr_matrix *matrix, int i_, int j_) {
+	// Find the corresponding block
+	int i = floor(i_/matrix->block_size); // Block-row index
+	int j = floor(j_/matrix->block_size); // Block-column index
 
-  // Use CSR look-up algorithm to locate the block
-  bool found = false;
-  int block_row_offset = matrix->block_row_offsets[i];
-  int step = 0;
-  while (step < matrix->block_row_offsets[i+1] - block_row_offset){
-  	if (matrix->block_columns[block_row_offset+step] != j) ++step;
-  	else{
-  		found = true;
-  		break;
-  	}
-  }
-  if (!found) return 0; // If the block is not present in the CSR representation, it's a 0
+	// Use CSR look-up algorithm to locate the block
+	bool found = false;
+	int block_row_offset = matrix->block_row_offsets[i];
+	int step = 0;
+	while (step < matrix->block_row_offsets[i+1] - block_row_offset){
+		if (matrix->block_columns[block_row_offset+step] != j) ++step;
+		else{
+			found = true;
+			break;
+		}
+	}
+	if (!found) return 0; // If the block is not present in the CSR representation, it's a 0
+	// At this point, the block has been found
+	int offset = (block_row_offset+step)*matrix->n_elements_per_block;
+	int i_block_start = matrix->block_size*i;
+	int j_block_start = matrix->block_size*j;
+	i_ -= i_block_start;
+	j_ -= j_block_start;
 
-  // At this point, the block has been found
-  int offset = (block_row_offset+step)*matrix->n_elements_per_block;
-  int i_block_start = matrix->block_size*i;
-  int j_block_start = matrix->block_size*j;
-  i_ -= i_block_start;
-  j_ -= j_block_start;
-
-  offset += i_*matrix->block_size + j_;
-  return matrix->values[offset];
+offset += i_*matrix->block_size + j_;
+return matrix->values[offset];
 }
 
 // Takes a matrix written as a 1D array and stores it as a bsr matrix!
