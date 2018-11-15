@@ -19,6 +19,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	MPI_Init(NULL, NULL);
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
 	printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
@@ -29,25 +35,6 @@ int main(int argc, char *argv[])
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	printf("Index of center: %zu\n", centerIndex);
 
-
-	MPI_Init(NULL, NULL);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-
-	/*
-	// Example for the getCommListSlices() function
-	int *commList0 = getCommListSlices(20);
-	for (int i = 0; i < 4*19; i+=2)
-	{
-		printf("%d %d\n", commList0[i], commList0[i+1]);
-	}*/
-
-	char bonusSlice=0;
-
-	//if (nodeZ%rank) bonusSlice = 1;
 	size_t thicknessMPI = (int)(nodeZ/world_size);
 	if (rank == world_size-1) thicknessMPI++;
 
