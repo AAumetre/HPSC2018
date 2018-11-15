@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 			bool isReceiver = false;
 			if (rank == commList[commIndex]) isSender = true;
 			if (rank == commList[commIndex+1]) isReceiver = true;
-			//if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
+			if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
 			// Need a if here, depending on the rank so that everyone knows what to do asynchronously
 			if (isSender || isReceiver)
 			{
@@ -130,24 +130,29 @@ int main(int argc, char *argv[])
 					int klocal = 0;
 					int j = floor((index-klocal*nodeX*nodeY)/nodeX);
 					int i = index - klocal * nodeX * nodeY - j * nodeX;
-					if (isSender){
-						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
+					if (isSender)
+					{
+						if (commList[commIndex] > commList[commIndex+1])
+						{ // If sender ID is greater than receiver ID
 							klocal = thicknessMPI-1;//max
 							// Send the upper boundary values
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
-						else {
+						else
+						{
 							// Send the lower boundary values
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
 					}
-					else{	
+					else
+					{
 						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 							klocal = thicknessMPI-1;//max
 							// Get the upper boundary values
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 						}
-						else{
+						else
+						{
 							// Get the lower boundary values
 							klocal = 0;
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
