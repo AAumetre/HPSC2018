@@ -25,15 +25,15 @@ int main(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	printf("Reading file %s ...\n", argv[1]);
+	if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
 	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	printf("\nNumber of nodes: %zu\n", nodeX);
+	//printf("\nNumber of nodes: %zu\n", nodeX);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
-	printf("Index of center: %zu\n", centerIndex);
+	//printf("Index of center: %zu\n", centerIndex);
 
 	size_t thicknessMPI = (int)(nodeZ/world_size);
 	if (rank == world_size-1) thicknessMPI++;
@@ -48,11 +48,12 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	// Give initial concentration value
 	if (rank == floor(world_size/2))
-		c_[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
+		c_[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
 
 	size_t stopTime = parameters.Tmax/parameters.m;
-	printf("Stop time: %zu\n", stopTime);
+	//printf("Stop time: %zu\n", stopTime);
 	size_t iteration = 0;
 	bool onBoundary = false;
 	bool onZBoundary = false;
@@ -73,15 +74,15 @@ int main(int argc, char *argv[])
 		// Compute internal values
 		for(index; index<stopIndex; index++)
 		{
-			int stage = floor(index/(nodeX*nodeY));
-			int inStage0 = index-stage*nodeX*nodeY;
+			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
+			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
 
 			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX-1))
 			{//I am in the domain
-				int k = floor(index/(nodeX*nodeY));
+				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[i+j*nodeX+k*nodeX*nodeY] +
+				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[i+j*nodeX+k*nodeX*nodeY] + // !!! check with k
 					parameters.m * parameters.D * (c_[i+1+j*nodeX+k*nodeX*nodeY]+c_[i+(j+1)*nodeX+k*nodeX*nodeY]+
 					c_[i+j*nodeX+(k+1)*nodeX*nodeY]-6*c_[i+j*nodeX+k*nodeX*nodeY]+
 					c_[i-1+j*nodeX+k*nodeX*nodeY]+c_[i+(j-1)*nodeX+k*nodeX*nodeY]+
