@@ -125,23 +125,24 @@ int main(int argc, char *argv[])
 			// Need a if here, depending on the rank so that everyone knows what to do asynchronously
 			if (isSender || isReceiver)
 			{
-				for (size_t index = 0; index < nodeX*nodeY; index ++)
+				int klocal = 0;
+				int j = floor((index-klocal*nodeX*nodeY)/nodeX);
+				int i = index - klocal * nodeX * nodeY - j * nodeX;
+				if (isSender)
 				{
-					int klocal = 0;
-					int j = floor((index-klocal*nodeX*nodeY)/nodeX);
-					int i = index - klocal * nodeX * nodeY - j * nodeX;
-					if (isSender)
-					{
-						if (commList[commIndex] > commList[commIndex+1])
+					if (commList[commIndex] > commList[commIndex+1])
 						{ // If sender ID is greater than receiver ID
 							klocal = thicknessMPI-1;//max
 							// Send the upper boundary values
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+							for (size_t index = 0; index < nodeX*nodeY; index ++)
+								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
 						else
 						{
 							// Send the lower boundary values
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+							klocal = 0;
+							for (size_t index = 0; index < nodeX*nodeY; index ++)
+								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
 					}
 					else
@@ -149,18 +150,19 @@ int main(int argc, char *argv[])
 						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 							klocal = thicknessMPI-1;//max
 							// Get the upper boundary values
-							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+							for (size_t index = 0; index < nodeX*nodeY; index ++)
+								MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 						}
 						else
 						{
 							// Get the lower boundary values
 							klocal = 0;
-							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+							for (size_t index = 0; index < nodeX*nodeY; index ++)
+								MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 						}
 					}
 				}
 			}
-		}
 		/*if (!(iteration%500))
 		{
 			for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
@@ -171,9 +173,9 @@ int main(int argc, char *argv[])
 
 			printf("\n \n \n");
 		} */
-		++iteration;
-	}
+			++iteration;
+		}
 
-	MPI_Finalize();
-	return 0;
-}
+		MPI_Finalize();
+		return 0;
+	}
