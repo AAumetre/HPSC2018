@@ -130,15 +130,17 @@ int main(int argc, char *argv[])
 					int klocal = 0;
 					int j = floor((index-klocal*nodeX*nodeY)/nodeX);
 					int i = index - klocal * nodeX * nodeY - j * nodeX;
+					MPI_Request request1, request2;
+					MPI_Status status;
 					if (isSender)
 					{
 						// Send the lower boundary values
 						if (rank!=0)
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+							MPI_Issend(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD, &request1);
 						// Send the uppwer boundary values
 						klocal = thicknessMPI-1;//max
 						if (rank!=world_size-1)
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+							MPI_Issend(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD, &request2);
 					}
 					else
 					{
@@ -151,6 +153,8 @@ int main(int argc, char *argv[])
 						if (rank!=0)
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
+					MPI_Wait(&request1, &status);
+  					MPI_Wait(&request2, &status);
 				}
 			}
 		}
