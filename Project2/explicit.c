@@ -130,31 +130,29 @@ int main(int argc, char *argv[])
 					int klocal = 0;
 					int j = floor((index-klocal*nodeX*nodeY)/nodeX);
 					int i = index - klocal * nodeX * nodeY - j * nodeX;
-					MPI_Request request1, request2;
-					MPI_Status status;
-					if (isSender)
-					{
-						// Send the lower boundary values
-						if (rank!=0)
-							MPI_Issend(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD, &request1);
-						// Send the uppwer boundary values
-						klocal = thicknessMPI-1;//max
-						if (rank!=world_size-1)
-							MPI_Issend(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD, &request2);
+					if (isSender){
+						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
+							klocal = thicknessMPI-1;//max
+							// Send the upper boundary values
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+						}
+						else {
+							// Send the lower boundary values
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+						}
 					}
-					else
-					{
-						// Get the upper boundary values
-						klocal = thicknessMPI-1;//max
-						if (rank!=world_size-1)
+					else{	
+						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
+							klocal = thicknessMPI-1;//max
+							// Get the upper boundary values
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-						// Get the lower boundary values
-						klocal = 0;
-						if (rank!=0)
+						}
+						else{
+							// Get the lower boundary values
+							klocal = 0;
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						}
 					}
-					MPI_Wait(&request1, &status);
-  					MPI_Wait(&request2, &status);
 				}
 			}
 		}
