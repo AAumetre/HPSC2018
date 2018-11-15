@@ -116,12 +116,12 @@ int main(int argc, char *argv[])
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
 			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
-			printf("%d to %d\n", commList[commIndex], commList[commIndex+1]);
+			//printf("%d to %d\n", commList[commIndex], commList[commIndex+1]);
 			bool isSender = false;
 			bool isReceiver = false;
 			if (rank == commList[commIndex]) isSender = true;
 			if (rank == commList[commIndex+1]) isReceiver = true;
-			if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
+			//if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
 			// Need a if here, depending on the rank so that everyone knows what to do asynchronously
 			if (isSender || isReceiver)
 			{

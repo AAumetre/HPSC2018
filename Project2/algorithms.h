@@ -1,5 +1,5 @@
 /*=======================================================================================
-*	This code was written by: 
+*	This code was written by:
 *								Antonin Aumètre - antonin.aumetre@gmail.com
 *								Céline Moureau -  cemoureau@gmail.com
 *	For: High Performance Scientific course at ULiège, 2018-19
@@ -93,9 +93,11 @@ int * getCommListSlices(unsigned int size){
 		list[2*max_value_begin+i-1] = i;
 	}
 	for (int i = 0; i < max_value-1; ++i){ // Permutations
-		if (i%2 ==0) list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin+1+i]; 
+		if (i%2 ==0) list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin+1+i];
 		else list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin-1+i];
 	}
 
+	for (int i = 0; i < 4*(size-1); ++i)
+		print("%d ", list[i]);
 	return list;
 }
