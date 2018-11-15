@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
 			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
-			//printf("%d to %d\n", commList[commIndex], commList[commIndex+1]);
+			printf("%d to %d\n", commList[commIndex], commList[commIndex+1]);
 			bool isSender = false;
 			bool isReceiver = false;
 			if (rank == commList[commIndex]) isSender = true;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 						if (rank!=world_size-1)
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 						// Get the lower boundary values
-						klocal = 0;//max
+						klocal = 0;
 						if (rank!=0)
 							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
