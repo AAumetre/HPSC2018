@@ -95,13 +95,13 @@ int main(int argc, char *argv[])
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
 				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[i+j*nodeX+k*nodeX*nodeY] +
-				parameters.m * parameters.D * (c_[i+1+j*nodeX+k*nodeX*nodeY]+c_[i+(j+1)*nodeX+k*nodeX*nodeY]+
+					parameters.m * parameters.D * (c_[i+1+j*nodeX+k*nodeX*nodeY]+c_[i+(j+1)*nodeX+k*nodeX*nodeY]+
 					c_[i+j*nodeX+(k+1)*nodeX*nodeY]-6*c_[i+j*nodeX+k*nodeX*nodeY]+
 					c_[i-1+j*nodeX+k*nodeX*nodeY]+c_[i+(j-1)*nodeX+k*nodeX*nodeY]+
 					c_[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
-				parameters.m * parameters.vx * (c_[i+1+j*nodeX+k*nodeX*nodeY]-c_[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-				parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+k*nodeX*nodeY]-c_[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-				parameters.m * parameters.vz * (c_[i+j*nodeX+(k+1)*nodeX*nodeY]-c_[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
+					parameters.m * parameters.vx * (c_[i+1+j*nodeX+k*nodeX*nodeY]-c_[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+					parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+k*nodeX*nodeY]-c_[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
+					parameters.m * parameters.vz * (c_[i+j*nodeX+(k+1)*nodeX*nodeY]-c_[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
 
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
@@ -132,15 +132,15 @@ int main(int argc, char *argv[])
 				{
 					if (commList[commIndex] > commList[commIndex+1])
 						{ // If sender ID is greater than receiver ID
-							klocal = thicknessMPI-1;//max
 							// Send the upper boundary values
+							klocal = 0;
 							for (size_t index = 0; index < nodeX*nodeY; index ++)
 								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
 						else
 						{
 							// Send the lower boundary values
-							klocal = 0;
+							klocal = thicknessMPI-1;
 							for (size_t index = 0; index < nodeX*nodeY; index ++)
 								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
 					else
 					{
 						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
-							klocal = thicknessMPI-1;//max
 							// Get the upper boundary values
+							klocal = thicknessMPI-1;
 							for (size_t index = 0; index < nodeX*nodeY; index ++)
 								MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 						}

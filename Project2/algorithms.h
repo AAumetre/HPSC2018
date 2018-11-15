@@ -96,8 +96,5 @@ int * getCommListSlices(unsigned int size){
 		if (i%2 ==0) list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin+1+i];
 		else list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin-1+i];
 	}
-
-	for (int i = 0; i < 4*(size-1); ++i)
-		printf("%d ", list[i]);
 	return list;
 }
