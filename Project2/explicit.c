@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	}*/
 
 	char bonusSlice=0;
-	
+
 	//if (nodeZ%rank) bonusSlice = 1;
 	size_t thicknessMPI = (int)(nodeZ/world_size);
 	if (rank == world_size-1) thicknessMPI++;
@@ -123,26 +123,33 @@ int main(int argc, char *argv[])
 			if (rank == commList[commIndex+1]) isReceiver = true;
 			//if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
 			// Need a if here, depending on the rank so that everyone knows what to do asynchronously
-			if (isSender || isReceiver){
+			if (isSender || isReceiver)
+			{
 				for (size_t index = 0; index < nodeX*nodeY; index ++)
 				{
 					int klocal = 0;
 					int j = floor((index-klocal*nodeX*nodeY)/nodeX);
 					int i = index - klocal * nodeX * nodeY - j * nodeX;
-					if (isSender){
+					if (isSender)
+					{
 						// Send the lower boundary values
-						MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+						if (rank!=0)
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						// Send the uppwer boundary values
 						klocal = thicknessMPI-1;//max
-						MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+						if (rank!=world_size-1)
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 					}
-					else{
+					else
+					{
 						// Get the upper boundary values
 						klocal = thicknessMPI-1;//max
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						if (rank!=world_size-1)
+							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 						// Get the lower boundary values
 						klocal = 0;//max
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						if (rank!=0)
+							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
 				}
 			}
