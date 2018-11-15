@@ -98,6 +98,6 @@ int * getCommListSlices(unsigned int size){
 	}
 
 	for (int i = 0; i < 4*(size-1); ++i)
-		print("%d ", list[i]);
+		printf("%d ", list[i]);
 	return list;
 }
