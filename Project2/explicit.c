@@ -157,14 +157,21 @@ int main(int argc, char *argv[])
 				}
 			}
 		/*if (!(iteration%500))
-		{
-			for(int i=0; i<nodeX*nodeY*nodeZ ; i++)
+		{*/
+			for(int index=0; i<stopIndex ; index++)
 			{
-				c_[i] = concentration[i];
-				printf("%f ", concentration[i]);
+				int k = floor(index/(nodeX*nodeY)); // !!! check with k
+				int j = floor((index-k*nodeX*nodeY)/nodeX);
+				int i = index - k * nodeX * nodeY - j * nodeX;
+
+				int kbis = k+1;
+				int jbis = floor((index-kbis*nodeX*nodeY)/nodeX);
+				int ibis = index - kbis * nodeX * nodeY - jbis * nodeX;
+				c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
+				//printf("%f ", concentration[i]);
 			}
 
-			printf("\n \n \n");
+			/*printf("\n \n \n");
 		} */
 			printf("iteration %zu ended\n", iteration);
 			++iteration;
