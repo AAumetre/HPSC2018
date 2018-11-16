@@ -109,10 +109,10 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			printf("index reached %zu from process %d\n", index, rank);
+			//printf("index reached %zu from process %d\n", index, rank);
 		}
 
-		printf("hello for loop works :D\n");
+		printf("hello for loop works :D from process %d\n", rank);
 		// Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
