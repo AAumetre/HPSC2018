@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	bool onZBoundary = false;
 	bool valueOnBoundary= false;
 
-	while (iteration <= stopTime && !valueOnBoundary)
+	while (iteration <= stopTime && !valueOnBoundary) // ! valueOnBoundary, un seul process s'arrete !
 	{
 		printf("iteration %zu from process %d\n", iteration, rank);
 		//research for boundaries
