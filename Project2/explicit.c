@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 		size_t isXbound = 0;
 		size_t index = 0;
 		if (rank == 0)
-			index=0;//nodeX*nodeY; 	printf("iteration %zu from process %d\n", iteration, rank);
+			index= nodeX*nodeY;
 		size_t stopIndex = nodeX*nodeY*thicknessMPI;
 		if (rank == world_size-1)
 			stopIndex -=nodeY*nodeX;
