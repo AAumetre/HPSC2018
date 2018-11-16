@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
-	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
+	size_t nodeX = 5//(int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
 	//printf("\nNumber of nodes: %zu\n", nodeX);
 
