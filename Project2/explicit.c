@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 	size_t nodeX = 9;//(int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	//printf("\nNumber of nodes: %zu\n", nodeX);
+	printf("Number of nodes: %zu\n", nodeX);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
 		{
 			//printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
+			printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
 
 			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX-1))
