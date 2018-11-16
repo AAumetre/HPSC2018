@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+	printf("We have %d processes\n", world_size);
 	if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
