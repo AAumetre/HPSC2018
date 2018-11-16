@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 			}
 		/*if (!(iteration%500))
 		{*/
-			for(int index=0; i<stopIndex ; index++)
+			for(int index=0; index<stopIndex ; index++)
 			{
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
