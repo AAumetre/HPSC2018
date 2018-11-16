@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
 		size_t stopIndex = nodeX*nodeY*thicknessMPI;
 		if (rank == world_size-1)
 			stopIndex -=nodeY*nodeX;
+		printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
 		for(index; index<stopIndex; index++)
@@ -97,6 +98,7 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
 
+				printf("loop works until comparison from process %d\n", rank);
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
 				if ((onBoundary||onZBoundary)  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0) valueOnBoundary=true;
