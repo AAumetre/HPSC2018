@@ -61,12 +61,12 @@ int main(int argc, char *argv[])
 
 	while (iteration <= stopTime && !valueOnBoundary)
 	{
-		printf("iteration %zu\n", iteration);
+		printf("iteration %zu from process %d\n", iteration, rank);
 		//research for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
 		if (rank == 0)
-			index=nodeX*nodeY;
+			index=0;//nodeX*nodeY; 	printf("iteration %zu from process %d\n", iteration, rank);
 		size_t stopIndex = nodeX*nodeY*thicknessMPI;
 		if (rank == world_size-1)
 			stopIndex -=nodeY*nodeX;
@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 		// Compute internal values
 		for(index; index<stopIndex; index++)
 		{
+			printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
 
