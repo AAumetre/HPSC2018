@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
 	while (iteration <= stopTime && !valueOnBoundary)
 	{
-		//printf("iteration %zu\n", iteration);
+		printf("iteration %zu\n", iteration);
 		//research for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
@@ -82,14 +82,19 @@ int main(int argc, char *argv[])
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[i+j*nodeX+k*nodeX*nodeY] + // !!! check with k
-					parameters.m * parameters.D * (c_[i+1+j*nodeX+k*nodeX*nodeY]+c_[i+(j+1)*nodeX+k*nodeX*nodeY]+
-					c_[i+j*nodeX+(k+1)*nodeX*nodeY]-6*c_[i+j*nodeX+k*nodeX*nodeY]+
-					c_[i-1+j*nodeX+k*nodeX*nodeY]+c_[i+(j-1)*nodeX+k*nodeX*nodeY]+
-					c_[i+j*nodeX+(k-1)*nodeX*nodeY])/pow(parameters.h,2) -
-					parameters.m * parameters.vx * (c_[i+1+j*nodeX+k*nodeX*nodeY]-c_[i-1+j*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-					parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+k*nodeX*nodeY]-c_[i+(j-1)*nodeX+k*nodeX*nodeY])/(2*parameters.h) -
-					parameters.m * parameters.vz * (c_[i+j*nodeX+(k+1)*nodeX*nodeY]-c_[i+j*nodeX+(k-1)*nodeX*nodeY])/(2*parameters.h);
+
+				int kbis = k+1;
+				int jbis = floor((index-kbis*nodeX*nodeY)/nodeX);
+				int ibis = index - kbis * nodeX * nodeY - jbis * nodeX;
+
+				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
+					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
+					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
+					c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY]+
+					c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/pow(parameters.h,2) -
+					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
+					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
+					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
 
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
@@ -161,6 +166,7 @@ int main(int argc, char *argv[])
 
 			printf("\n \n \n");
 		} */
+			printf("iteration %zu ended\n", iteration);
 			++iteration;
 		}
 
