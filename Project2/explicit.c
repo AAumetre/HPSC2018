@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 	size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
 	double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 	double *c_ = calloc(nodeX*nodeY*(thicknessMPI+2), sizeof(double)); // +2 to store the values coming from the previous and next slices
+	printf("size of c_prev %zu from process %d\n", nodeX*nodeY*(thicknessMPI+2), rank);
 
 	if (concentration == NULL || c_ == NULL) {
 		puts("Mem ERR0R !");
