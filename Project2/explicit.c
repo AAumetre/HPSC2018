@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
-	size_t nodeX = 5;//(int)(parameters.L/parameters.h) + 1;
+	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
 	//printf("\nNumber of nodes: %zu\n", nodeX);
 
@@ -109,10 +109,10 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			//printf("index reached %zu from process %d\n", index, rank);
+			printf("index reached %zu from process %d\n", index, rank);
 		}
 
-		printf("hello for loop works :D from process %d\n", rank);
+		printf("\n\n hello for loop works :D from process %d\n\n", rank);
 		// Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
