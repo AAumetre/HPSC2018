@@ -36,9 +36,9 @@ int main(int argc, char *argv[])
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
 
-	if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
+	//if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
 	double value = ((double)nodeZ/(double)world_size);
-	printf("init %f\n", value);
+	//printf("init %f\n", value);
 	size_t thicknessMPI = myRound(value);
 	if (rank == world_size-1)
 	{
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		else
 			thicknessMPI++;
 	}
-	printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
+	//printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 
 	size_t kCenter = floor(centerIndex/(nodeX*nodeY));
 	size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 		// Compute internal values
 		for(index=0; index<stopIndex; index++)
 		{
-			//if (rank == 3) printf("enter the for index %zu from process %d\n", index, rank);
+			if (rank == 3) printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
@@ -98,24 +98,24 @@ int main(int argc, char *argv[])
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				/*if (rank == 3)
+				if (rank == 3)
 				{
 					printf("i j k %d %d %d\n", i, j, k);
 					printf("vector %d\n", i+j*nodeX+k*nodeX*nodeY);
 					printf("vector size %d\n", nodeX*nodeY*thicknessMPI);
-				}*/
+				}
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				/*if (rank == 3)
+				if (rank == 3)
 				{
 					printf("Cprev i j k %d %d %d\n", ibis, jbis, kbis);
 					printf("Cprev vector %d\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
 					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2));
-				}*/
+				}
 
-				
+
 				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			//if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
+			if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
