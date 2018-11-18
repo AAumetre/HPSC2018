@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
 					printf("vector size %d\n", nodeX*nodeY*thicknessMPI);
 				}
 				int kbis = k+1;
-				int jbis = floor((index*nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
-				int ibis = index*nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
+				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
+				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
 				if (rank == 3)
 				{
