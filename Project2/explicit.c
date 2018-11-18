@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 		size_t stopIndex = nodeX*nodeY*thicknessMPI;
 		if (rank == world_size-1)
 			stopIndex -=nodeY*nodeX;
-		printf("stop index %zu from process %d\n", stopIndex, rank);
+		//printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
 		for(index; index<stopIndex; index++)
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			printf("index reached %zu from process %d\n", index, rank);
+			//printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		printf("\n\n hello for loop works :D from process %d\n\n", rank);
