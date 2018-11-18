@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 		// Compute internal values
 		for(index=0; index<stopIndex; index++)
 		{
-			if (rank == 0 && iteration>0) printf("enter the for index %zu from process %d\n", index, rank);
+			if (rank == 0 && iteration>1) printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
