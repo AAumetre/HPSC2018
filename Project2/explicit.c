@@ -11,15 +11,15 @@
 
 double myRound(double value, bool* isSup)
 {
-	if (floor(value)-value > value- ceil(value))
+	if (ceil(value)-value > value- floor(value))
 	{
 		*isSup = true;
-		return floor(value);
+		return ceil(value);
 	}
 	else
 	{
 		*isSup = false;
-		return ceil(value);
+		return floor(value);
 	}
 }
 
