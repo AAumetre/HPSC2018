@@ -11,7 +11,7 @@
 
 double myRound(double value, bool* isSup)
 {
-	if (ceil(value)-value > value- floor(value))
+	if (ceil(value)-value < value- floor(value))
 	{
 		*isSup = true;
 		return ceil(value);
