@@ -25,13 +25,13 @@ int main(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	printf("We have %d processes\n", world_size);
-	if (rank == 0) printf("Reading file %s ...\n", argv[1]);
+	if (rank == 3) printf("We have %d processes\n", world_size);
+	//if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
 	size_t nodeX = 9;//(int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	printf("Number of nodes: %zu\n", nodeX);
+	if (rank == 3) printf("Number of nodes: %zu\n", nodeX);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
@@ -73,12 +73,12 @@ int main(int argc, char *argv[])
 		size_t stopIndex = nodeX*nodeY*thicknessMPI;
 		if (rank == world_size-1)
 			stopIndex -=nodeY*nodeX;
-		printf("stop index %zu from process %d\n", stopIndex, rank);
+		if (rank == 3) printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
 		for(index=113; index<stopIndex; index++)
 		{
-			printf("enter the for index %zu from process %d\n", index, rank);
+			if (rank == 3) printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
@@ -88,7 +88,11 @@ int main(int argc, char *argv[])
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-
+				if (rank == 3)
+				{
+					printf("i j k %d %d %d\n", i, j, k);
+					printf("vector %d\n", i+j*nodeX+k*nodeX*nodeY);
+				}
 				int kbis = k+1;
 				int jbis = floor((index*nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index*nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
@@ -113,7 +117,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			printf("index reached %zu from process %d\n", index, rank);
+			if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		printf("\n\n hello for loop works :D from process %d\n\n", rank);
