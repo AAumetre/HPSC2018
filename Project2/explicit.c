@@ -51,7 +51,8 @@ int main(int argc, char *argv[])
 
 	if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
 	double value = (double)(nodeZ/world_size);
-	size_t thicknessMPI = myRound();
+	printf("init %f\n", value);
+	size_t thicknessMPI = myRound(value);
 	if (rank == world_size-1)
 	{
 		if (thicknessMPI>nodeZ/world_size)
