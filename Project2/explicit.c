@@ -9,16 +9,16 @@
 
 #define initConcentration 1 //[g/m3]
 
-double round(double value, bool& isSup)
+double round(double value, bool* isSup)
 {
 	if (floor(value)-value > value- ceil(value))
 	{
-		isSup = true;
+		*isSup = true;
 		return floor(value);
 	}
 	else
 	{
-		isSup = false;
+		*isSup = false;
 		return ceil(value);
 	}
 }
