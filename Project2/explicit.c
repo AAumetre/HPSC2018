@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 		printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
-		for(index=100; index<stopIndex; index++)
+		for(index=112; index<stopIndex; index++)
 		{
 			printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
