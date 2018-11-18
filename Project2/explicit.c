@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	// Give initial concentration value
 	if (rank == floor(world_size/2))
 	{
-		printf("hello\n")
+		printf("hello\n");
 		c_[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
 		printf("Index of center: %zu from rank %d\n", centerIndex, rank);
 	}
