@@ -13,11 +13,13 @@ double myRound(double value, bool* isSup)
 {
 	if (ceil(value)-value < value-floor(value))
 	{
+		printf("ceil: %d", ceil(value))
 		*isSup = true;
 		return ceil(value);
 	}
 	else
 	{
+		printf("floor %d\n", floor(value));
 		*isSup = false;
 		return floor(value);
 	}
@@ -50,6 +52,7 @@ int main(int argc, char *argv[])
 	//printf("Index of center: %zu\n", centerIndex);
 
 	bool isSup= true;
+	if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
 	size_t thicknessMPI = myRound(nodeZ/world_size, &isSup);
 	if (rank == world_size-1)
 	{
