@@ -9,6 +9,19 @@
 
 #define initConcentration 1 //[g/m3]
 
+double round(double value, bool* isSup)
+{
+	if floor(value)-value > value- ceil(value)
+	{
+		isSup = true;
+		return floor(value)
+	}
+	else
+	{
+		isSup = false;
+		return ceil(value)
+	}
+}
 
 
 int main(int argc, char *argv[])
@@ -29,15 +42,23 @@ int main(int argc, char *argv[])
 	//if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
-	size_t nodeX = 9;//(int)(parameters.L/parameters.h) + 1;
+	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
 	if (rank == 3) printf("Number of nodes: %zu\n", nodeX);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
 
-	size_t thicknessMPI = (int)(nodeZ/world_size);
-	if (rank == world_size-1) thicknessMPI++;
+	bool isSup= true;
+	size_t thicknessMPI = round(nodeZ/world_size, &isSup);
+	if (rank == world_size-1)
+	{
+		if isSup
+			thicknessMPI--;
+		else
+			thicknessMPI++;
+	}
+	printf("Thickness = %zu, for rank %d", thicknessMPI, rank);
 
 	size_t kCenter = floor(centerIndex/(nodeX*nodeY));
 	size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
@@ -128,7 +149,7 @@ int main(int argc, char *argv[])
 			//if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
 		}
 
-		printf("\n\n hello for loop works :D from process %d at iteration %zu\n\n", rank, iteration);
+		printf("\n\n for loop works :D from process %d at iteration %zu\n\n", rank, iteration);
 		// Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
