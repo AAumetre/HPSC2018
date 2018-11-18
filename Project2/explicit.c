@@ -53,16 +53,11 @@ int main(int argc, char *argv[])
 
 	// Give initial concentration value
 	if (rank == floor(world_size/2))
-	{
-		printf("hello\n");
 		c_[nodeX*nodeY + nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
-		printf("Index of center: %zu from rank %d\n", nodeX*nodeY +nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ, rank);
-		printf("size of c_prev %zu from process %d\n", nodeX*nodeY*(thicknessMPI+2), rank);
-	}
 
 	size_t stopTime = parameters.Tmax/parameters.m;
 	//printf("Stop time: %zu\n", stopTime);
-	size_t iteration = 0;
+	size_t iteration = 100;
 	bool onBoundary = false;
 	bool onZBoundary = false;
 	bool valueOnBoundary= false;
@@ -78,12 +73,12 @@ int main(int argc, char *argv[])
 		size_t stopIndex = nodeX*nodeY*thicknessMPI;
 		if (rank == world_size-1)
 			stopIndex -=nodeY*nodeX;
-		//printf("stop index %zu from process %d\n", stopIndex, rank);
+		printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
 		for(index; index<stopIndex; index++)
 		{
-			//printf("enter the for index %zu from process %d\n", index, rank);
+			printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
@@ -110,7 +105,7 @@ int main(int argc, char *argv[])
 
 				//if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
-				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
+				//onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				//if ((onBoundary||onZBoundary)  && concentration[i+j*nodeX+k*nodeX*nodeY] != 0) valueOnBoundary=true;
 				//{printf("onbound comparison from process %d\n", rank); valueOnBoundary=true; printf("on comparison works from process %d\n", rank);}
@@ -118,7 +113,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			//printf("index reached %zu from process %d\n", index, rank);
+			printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		printf("\n\n hello for loop works :D from process %d\n\n", rank);
