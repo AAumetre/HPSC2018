@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				if (rank == 0 && iteration >0)
+				if (rank == 0 && iteration >1)
 				{
 					printf("i j k %d %d %d\n", i, j, k);
 					printf("vector %d\n", i+j*nodeX+k*nodeX*nodeY);
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				if (rank == 0 && iteration >0)
+				if (rank == 0 && iteration >1)
 				{
 					printf("Cprev i j k %d %d %d\n", ibis, jbis, kbis);
 					printf("Cprev vector %d\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			if (rank == 0 && iteration >0) printf("index reached %zu from process %d\n", index, rank);
+			if (rank == 0 && iteration >1) printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
