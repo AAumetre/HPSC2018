@@ -14,12 +14,12 @@ double round(double value, bool* isSup)
 	if (floor(value)-value > value- ceil(value))
 	{
 		isSup = true;
-		return floor(value)
+		return floor(value);
 	}
 	else
 	{
 		isSup = false;
-		return ceil(value)
+		return ceil(value);
 	}
 }
 
