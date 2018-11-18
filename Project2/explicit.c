@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
 	if (rank == floor(world_size/2))
 	{
 		printf("hello\n");
-		c_[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
-		printf("Index of center: %zu from rank %d\n", nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ, rank);
+		c_[nodeX*nodeY + nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
+		printf("Index of center: %zu from rank %d\n", nodeX*nodeY +nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ, rank);
 		printf("size of c_prev %zu from process %d\n", nodeX*nodeY*(thicknessMPI+2), rank);
 	}
 
