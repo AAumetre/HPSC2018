@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 		// Compute internal values
 		for(index=0; index<stopIndex; index++)
 		{
-			if (rank == 1 && iteration>0) printf("enter the for index %zu from process %d\n", index, rank);
+			//if (rank == 1 && iteration>0) printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
@@ -98,22 +98,22 @@ int main(int argc, char *argv[])
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				if (rank == 1 && iteration >0)
+				/*if (rank == 1 && iteration >0)
 				{
 					printf("i j k %d %d %d\n", i, j, k);
 					printf("vector %d\n", i+j*nodeX+k*nodeX*nodeY);
 					printf("vector size %d\n", nodeX*nodeY*thicknessMPI);
-				}
+				}*/
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				if (rank == 1 && iteration >0)
+				/*if (rank == 1 && iteration >0)
 				{
 					printf("Cprev i j k %d %d %d\n", ibis, jbis, kbis);
 					printf("Cprev vector %d\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
 					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2));
-				}
+				}*/
 
 
 				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			if (rank == 1 && iteration >0) printf("index reached %zu from process %d\n", index, rank);
+			//if (rank == 1 && iteration >0) printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
