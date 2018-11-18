@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	printf("Number of nodes: %zu\n", nodeX);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
-	printf("Index of center: %zu\n", centerIndex);
+	//printf("Index of center: %zu\n", centerIndex);
 
 	size_t thicknessMPI = (int)(nodeZ/world_size);
 	if (rank == world_size-1) thicknessMPI++;
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
 	double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 	double *c_ = calloc(nodeX*nodeY*(thicknessMPI+2), sizeof(double)); // +2 to store the values coming from the previous and next slices
-	printf("size of c_prev %zu from process %d\n", nodeX*nodeY*(thicknessMPI+2), rank);
+	//printf("size of c_prev %zu from process %d\n", nodeX*nodeY*(thicknessMPI+2), rank);
 
 	if (concentration == NULL || c_ == NULL) {
 		puts("Mem ERR0R !");
@@ -56,7 +56,8 @@ int main(int argc, char *argv[])
 	{
 		printf("hello\n");
 		c_[nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
-		printf("Index of center: %zu from rank %d\n", centerIndex, rank);
+		printf("Index of center: %zu from rank %d\n", nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ, rank);
+		printf("size of c_prev %zu from process %d\n", nodeX*nodeY*(thicknessMPI+2), rank);
 	}
 
 	size_t stopTime = parameters.Tmax/parameters.m;
