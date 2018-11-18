@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
 	size_t stopTime = parameters.Tmax/parameters.m;
 	//printf("Stop time: %zu\n", stopTime);
-	size_t iteration = 100;
+	size_t iteration = 0;
 	bool onBoundary = false;
 	bool onZBoundary = false;
 	bool valueOnBoundary= false;
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 		printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
-		for(index; index<stopIndex; index++)
+		for(index=100; index<stopIndex; index++)
 		{
 			printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
