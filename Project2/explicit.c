@@ -11,7 +11,7 @@
 
 double round(double value, bool* isSup)
 {
-	if floor(value)-value > value- ceil(value)
+	if (floor(value)-value > value- ceil(value))
 	{
 		isSup = true;
 		return floor(value)
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	size_t thicknessMPI = round(nodeZ/world_size, &isSup);
 	if (rank == world_size-1)
 	{
-		if isSup
+		if (isSup)
 			thicknessMPI--;
 		else
 			thicknessMPI++;
