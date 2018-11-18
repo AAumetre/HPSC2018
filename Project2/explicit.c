@@ -189,8 +189,8 @@ int main(int argc, char *argv[])
 				int i = index - k * nodeX * nodeY - j * nodeX;
 
 				int kbis = k+1;
-				int jbis = floor((index*nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
-				int ibis = index*nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
+				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
+				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 				c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
 				//printf("%f ", concentration[i]);
 			}
