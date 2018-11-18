@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	//printf("Index of center: %zu\n", centerIndex);
 
 	if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
-	double value = (double)(nodeZ/world_size);
+	double value = ((double)nodeZ/(double)world_size);
 	printf("init %f\n", value);
 	size_t thicknessMPI = myRound(value);
 	if (rank == world_size-1)
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 		else
 			thicknessMPI++;
 	}
-	printf("Thickness = %zu, for rank %d", thicknessMPI, rank);
+	printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 	//
 	// size_t kCenter = floor(centerIndex/(nodeX*nodeY));
 	// size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
