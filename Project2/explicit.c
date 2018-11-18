@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 			//if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
 		}
 
-		//printf("\n\n for loop works :D from process %d at iteration %zu\n\n", rank, iteration);
+		printf("\n\n for loop works :D from process %d at iteration %zu\n\n", rank, iteration);
 		// Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
