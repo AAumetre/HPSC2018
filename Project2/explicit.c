@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 				{
 					printf("i j k %d %d %d\n", i, j, k);
 					printf("vector %d\n", i+j*nodeX+k*nodeX*nodeY);
-					printf("vector size %d\n", nodeX*nodeY*thicknessMPI)
+					printf("vector size %d\n", nodeX*nodeY*thicknessMPI);
 				}
 				int kbis = k+1;
 				int jbis = floor((index*nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 				{
 					printf("Cprev i j k %d %d %d\n", ibis, jbis, kbis);
 					printf("Cprev vector %d\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
-					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2))
+					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2));
 				}
 
 				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
