@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
 	//printf("Index of center: %zu\n", centerIndex);
 
 	if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
-	size_t thicknessMPI = myRound(nodeZ/world_size);
+	double value = (double)(nodeZ/world_size);
+	size_t thicknessMPI = myRound();
 	if (rank == world_size-1)
 	{
 		if (thicknessMPI>nodeZ/world_size)
