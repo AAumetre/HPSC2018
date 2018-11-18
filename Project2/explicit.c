@@ -5,7 +5,7 @@
 
 
 #include "CSR_BSR.h"
-#include "readData.h"
+#include "fileIO.h"
 
 #define initConcentration 1 //[g/m3]
 
@@ -115,8 +115,7 @@ int main(int argc, char *argv[])
 					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2));
 				}*/
 
-				
-				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
+				/*concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY]+
@@ -124,7 +123,7 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
-
+*/
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
@@ -138,7 +137,7 @@ int main(int argc, char *argv[])
 			//if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
 		}
 
-		printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
+		//printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
 		// Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
@@ -171,49 +170,75 @@ int main(int argc, char *argv[])
 							for (size_t index = 0; index < nodeX*nodeY; index ++)
 								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
+				}
+				else{
+					if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
+						// Get the upper boundary values
+						klocal = thicknessMPI-1;
+						for (size_t index = 0; index < nodeX*nodeY; index ++)
+							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
 					else
 					{
-						if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
-							// Get the upper boundary values
-							klocal = thicknessMPI-1;
-							for (size_t index = 0; index < nodeX*nodeY; index ++)
-								MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-						}
-						else
-						{
-							// Get the lower boundary values
-							klocal = 0;
-							for (size_t index = 0; index < nodeX*nodeY; index ++)
-								MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-						}
+						// Get the lower boundary values
+						klocal = 0;
+						for (size_t index = 0; index < nodeX*nodeY; index ++)
+							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
 				}
 			}
+		}
 		/*if (!(iteration%500))
 		{*/
-			for(int index=0; index<stopIndex ; index++)
-			{
-				int k = floor(index/(nodeX*nodeY)); // !!! check with k
-				int j = floor((index-k*nodeX*nodeY)/nodeX);
-				int i = index - k * nodeX * nodeY - j * nodeX;
+		for(int index=0; index<stopIndex ; index++)
+		{
+			int k = floor(index/(nodeX*nodeY)); // !!! check with k
+			int j = floor((index-k*nodeX*nodeY)/nodeX);
+			int i = index - k * nodeX * nodeY - j * nodeX;
 
-				int kbis = k+1;
-				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
-				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
-				c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
-				//printf("%f ", concentration[i]);
-			}
+			int kbis = k+1;
+			int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
+			int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
+			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
+			//printf("%f ", concentration[i]);
+		}
 
 			/*printf("\n \n \n");
 		} */
 			//printf("iteration %zu ended\n", iteration);
-			++iteration;
-		}
-
-		free(concentration);
-		free(c_);
-
-		MPI_Finalize();
-		return 0;
+		++iteration;
 	}
+
+	// Use of the MPI file IO functions
+	int data_size = nodeX*nodeY*thicknessMPI; // double
+	MPI_File output_file;
+	MPI_Datatype data_type;
+	MPI_Type_contiguous(data_size, MPI_DOUBLE, &data_type);
+	MPI_Type_commit(&data_type);
+	MPI_Offset disp;
+	disp = data_size*rank*sizeof(double); // Displacement in bytes
+
+	MPI_File_open(MPI_COMM_WORLD, "out.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+	MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
+
+	int isXbound = 0;
+	int chunk_size = nodeX*nodeY*nodeZ+1; // +1 for the carrier return at the end of a line
+	int *buffer = malloc(chunk_size*sizeof(double));
+	for(int i=0; i<nodeX*nodeY*nodeZ ; i++){ // Read&write the memory line by line
+		buffer[i] = concentration[i];
+		isXbound++;
+		if(isXbound == nodeX){
+			isXbound = 0;
+			buffer[i] = '\n'; // !!! not sure if that'll work as a DOUBLE
+			MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
+		}
+	}
+	MPI_File_close(&output_file);
+
+
+	// Cleaning
+	free(concentration);
+	free(c_);
+	MPI_Finalize();
+	return 0;
+}
