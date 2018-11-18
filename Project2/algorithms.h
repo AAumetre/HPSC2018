@@ -15,6 +15,7 @@
 // Prototypes
 int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
 int * getCommListSlices(unsigned int size);
+double myRound(double value);
 
 /*=====================================================================================*/
 // Implementation
@@ -97,4 +98,19 @@ int * getCommListSlices(unsigned int size){
 		else list[2*max_value_begin+max_value-1+i] = list[2*max_value_begin-1+i];
 	}
 	return list;
+}
+
+// Natural round-off
+double myRound(double value)
+{
+	if (ceil(value)-value < value-floor(value))
+	{
+		printf("ceil: %f", ceil(value));
+		return ceil(value);
+	}
+	else
+	{
+		printf("floor %f\n", floor(value));
+		return floor(value);
+	}
 }

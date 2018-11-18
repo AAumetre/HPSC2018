@@ -9,19 +9,6 @@
 
 #define initConcentration 1 //[g/m3]
 
-double myRound(double value)
-{
-	if (ceil(value)-value < value-floor(value))
-	{
-		printf("ceil: %d", ceil(value));
-		return ceil(value);
-	}
-	else
-	{
-		printf("floor %d\n", floor(value));
-		return floor(value);
-	}
-}
 
 
 int main(int argc, char *argv[])
@@ -38,13 +25,13 @@ int main(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	if (rank == 3) printf("We have %d processes\n", world_size);
+	if (rank == 0) printf("We have %d processes\n", world_size);
 	//if (rank == 0) printf("Reading file %s ...\n", argv[1]);
 	Param parameters = readDat(argv[1]);
 
 	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	if (rank == 3) printf("Number of nodes: %zu\n", nodeX);
+	if (rank == 0) printf("Number of nodes: %zu\n", nodeX);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
@@ -99,7 +86,7 @@ int main(int argc, char *argv[])
 		//if (rank == 3) printf("stop index %zu from process %d\n", stopIndex, rank);
 
 		// Compute internal values
-		for(index=113; index<stopIndex; index++)
+		for(index=0; index<stopIndex; index++)
 		{
 			//if (rank == 3) printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
@@ -128,6 +115,7 @@ int main(int argc, char *argv[])
 					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2));
 				}*/
 
+				
 				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
@@ -136,7 +124,6 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
-
 
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
@@ -151,7 +138,7 @@ int main(int argc, char *argv[])
 			//if (rank == 3) printf("index reached %zu from process %d\n", index, rank);
 		}
 
-		printf("\n\n for loop works :D from process %d at iteration %zu\n\n", rank, iteration);
+		printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
 		// Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
@@ -223,6 +210,9 @@ int main(int argc, char *argv[])
 			//printf("iteration %zu ended\n", iteration);
 			++iteration;
 		}
+
+		free(concentration);
+		free(c_);
 
 		MPI_Finalize();
 		return 0;
