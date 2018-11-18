@@ -9,18 +9,16 @@
 
 #define initConcentration 1 //[g/m3]
 
-double myRound(double value, int* isSup)
+double myRound(double value)
 {
 	if (ceil(value)-value < value-floor(value))
 	{
 		printf("ceil: %d", ceil(value))
-		*isSup = 1;
 		return ceil(value);
 	}
 	else
 	{
 		printf("floor %d\n", floor(value));
-		*isSup = 0;
 		return floor(value);
 	}
 }
@@ -51,12 +49,11 @@ int main(int argc, char *argv[])
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
 
-	int isSup= 0;
 	if (rank == 0) printf("node Z %zu, world_size %d\n", nodeZ, world_size);
 	size_t thicknessMPI = myRound(nodeZ/world_size, &isSup);
 	if (rank == world_size-1)
 	{
-		if (isSup)
+		if (thicknessMPI>nodeZ/world_size)
 			thicknessMPI--;
 		else
 			thicknessMPI++;
