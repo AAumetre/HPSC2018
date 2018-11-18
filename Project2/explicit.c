@@ -9,7 +9,7 @@
 
 #define initConcentration 1 //[g/m3]
 
-double round(double value, bool* isSup)
+double myRound(double value, bool* isSup)
 {
 	if (floor(value)-value > value- ceil(value))
 	{
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	//printf("Index of center: %zu\n", centerIndex);
 
 	bool isSup= true;
-	size_t thicknessMPI = round(nodeZ/world_size, &isSup);
+	size_t thicknessMPI = myRound(nodeZ/world_size, &isSup);
 	if (rank == world_size-1)
 	{
 		if (isSup)
