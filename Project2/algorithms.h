@@ -105,12 +105,12 @@ double myRound(double value)
 {
 	if (ceil(value)-value < value-floor(value))
 	{
-		printf("ceil: %f", ceil(value));
+		//printf("ceil: %f", ceil(value));
 		return ceil(value);
 	}
 	else
 	{
-		printf("floor %f\n", floor(value));
+		//printf("floor %f\n", floor(value));
 		return floor(value);
 	}
 }

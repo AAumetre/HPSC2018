@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	if (rank == 0) printf("Number of nodes: %zu\n", nodeX);
+	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
 
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	//printf("Index of center: %zu\n", centerIndex);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
 	while (iteration <= stopTime && !valueOnBoundary) // ! valueOnBoundary, un seul process s'arrete !
 	{
-		if (rank == 1 && iteration>0) printf("enter the iteration loop from process %d\n", rank);
+		//if (rank == 1 && iteration>0) printf("enter the iteration loop from process %d\n", rank);
 		//printf("iteration %zu from process %d\n", iteration, rank);
 		//research for boundaries
 		size_t isXbound = 0;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 		// Compute internal values
 		for(index=0; index<stopIndex; index++)
 		{
-			if (rank == 1 && iteration>0) printf("enter the for index %zu from process %d\n", index, rank);
+			//if (rank == 1 && iteration>0) printf("enter the for index %zu from process %d\n", index, rank);
 			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
@@ -101,9 +101,9 @@ int main(int argc, char *argv[])
 				int i = index - k * nodeX * nodeY - j * nodeX;
 				if (rank == 1 && iteration >0)
 				{
-					printf("i j k %d %d %d\n", i, j, k);
-					printf("vector %d\n", i+j*nodeX+k*nodeX*nodeY);
-					printf("vector size %d\n", nodeX*nodeY*thicknessMPI);
+					//printf("i j k %ld %ld %ld\n", i, j, k);
+					//printf("vector %ld\n", i+j*nodeX+k*nodeX*nodeY);
+					//printf("vector size %ld\n", nodeX*nodeY*thicknessMPI);
 				}
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
@@ -111,9 +111,9 @@ int main(int argc, char *argv[])
 
 				if (rank == 1 && iteration >0)
 				{
-					printf("Cprev i j k %d %d %d\n", ibis, jbis, kbis);
-					printf("Cprev vector %d\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
-					printf("Cprev vector size %d\n", nodeX*nodeY*(thicknessMPI+2));
+					//printf("Cprev i j k %ld %ld %ld\n", ibis, jbis, kbis);
+					//printf("Cprev vector %ld\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
+					//printf("Cprev vector size %ld\n", nodeX*nodeY*(thicknessMPI+2));
 				}
 
 				/*concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
-			if (rank == 1 && iteration >0) printf("index reached %zu from process %d\n", index, rank);
+			//if (rank == 1 && iteration >0) printf("index reached %zu from process %d\n", index, rank);
 		}
 
 		//printf("For loop works :D from process %d at iteration %zu\n\n", rank, iteration);
@@ -212,22 +212,23 @@ int main(int argc, char *argv[])
 	}
 
 	// Use of the MPI file IO functions
-	int data_size = nodeX*nodeY*thicknessMPI; // double
+	int data_size = thicknessMPI*(nodeX*nodeY + 1); // doubles, data every node has + carrier returns (this is a number, not bytes!)
+	// Prepare the data types and dispalcements for MPI
 	MPI_File output_file;
 	MPI_Datatype data_type;
 	MPI_Type_contiguous(data_size, MPI_DOUBLE, &data_type);
 	MPI_Type_commit(&data_type);
 	MPI_Offset disp;
 	disp = data_size*rank*sizeof(double); // Displacement in bytes
-
+	// Actually open/create the file and set the view the current node has
 	MPI_File_open(MPI_COMM_WORLD, "out.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 	MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
 
 	int isXbound = 0;
 	int chunk_size = nodeX*nodeY*nodeZ+1; // +1 for the carrier return at the end of a line
 	int *buffer = malloc(chunk_size*sizeof(double));
-	for(int i=0; i<nodeX*nodeY*nodeZ ; i++){ // Read&write the memory line by line
-		buffer[i] = concentration[i];
+	for(int i=0; i<nodeX*nodeY*thicknessMPI ; i++){ // Goes all over the data each node has stored
+		buffer[i] = concentration[i]; // Gets a line of data in the buffer
 		isXbound++;
 		if(isXbound == nodeX){
 			isXbound = 0;
@@ -236,6 +237,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	MPI_File_close(&output_file);
+	printf("Node #%d has finished writing %ld bytes in the output file.\n", rank, data_size*sizeof(double));
 
 
 	// Cleaning
