@@ -70,9 +70,12 @@ int main(int argc, char *argv[])
 	size_t iteration = 0;
 	bool onBoundary = false;
 	bool onZBoundary = false;
-	bool valueOnBoundary= false;
+	bool valueOnBoundary = false;
+	int *stopFlags = malloc(world_size*sizeof(int));
+	int *stopFlagsFromOthers = calloc(world_size,sizeof(int));
+	bool stopFlag = false;
 
-	while (iteration <= stopTime && !valueOnBoundary) // ! valueOnBoundary, un seul process s'arrete !
+	while (iteration <= stopTime && !stopFlag) // ! valueOnBoundary, un seul process s'arrete !
 	{
 		//if (rank == 1 && iteration>0) printf("enter the iteration loop from process %d\n", rank);
 		//printf("iteration %zu from process %d\n", iteration, rank);
@@ -94,7 +97,7 @@ int main(int argc, char *argv[])
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
 
-			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX-1))
+			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX)) // !!! -1 enlevé ici
 			{//I am in the domain
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
@@ -128,32 +131,36 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
-				
-				// Find the right conversion
-				/*int ijk = ;// i, j, k
-				int i_p = ;// i+1, j, k
-				int i_m = ;// i-1, j, k
-				int j_p = ;// i, j+1, k
-				int j_m = ;// i, j-1, k
-				int k_p = ;// i, j, k+1
-				int k_m = ;// i, j, k-1
 
-				concentration[] =
-					c_[ijk] +
-					parameters.m * parameters.D * (c_[i_p]+c_[j_p]+c_[k_p]-6*c_[ijk]+c_[i_m]+c_[j_m]+c_[k_m])/pow(parameters.h,2) -
-					parameters.m * parameters.vx * (c_[i_p]-c_[i_m])/(2*parameters.h) -
-					parameters.m * parameters.vy * (c_[j_p]-c_[j_m])/(2*parameters.h) -
-					parameters.m * parameters.vz * (c_[k_p]-c_[k_m])/(2*parameters.h);
-					*/
-				
-
-				if (rank==0 || rank == world_size-1) onZBoundary = (index <= 2*nodeX*nodeY || index > (thicknessMPI-2)*nodeX*nodeX);
+				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
+				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
-				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
+				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
-				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) valueOnBoundary=true;
-				//{printf("onbound comparison from process %d\n", rank); valueOnBoundary=true; printf("on comparison works from process %d\n", rank);}
+
+				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) //valueOnBoundary=true;
+				{
+					valueOnBoundary=true;
+					//printf("onbound comparison works at index %zu for process %d at iteration %zu and C is %f\n", index, rank, iteration, concentration[index]);
+				}
+
+				// Send your status to all the other nodes
+				for (int i = 0; i < world_size; ++i){
+					if(valueOnBoundary)stopFlags[i] = 1;
+					else stopFlags[i] = 0;
+				}
+				MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
+				printf("On node #%d, at iteration %d and index %d stop flags from others: ", rank, iteration, index);
+				for (int i = 0; i < world_size; ++i){
+					printf("%d ", stopFlagsFromOthers[i]);
+					if(stopFlagsFromOthers[i] == 1){
+						stopFlag = true;
+						break;
+					}
+				}
+				printf("\n");
 			}
+
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
@@ -244,6 +251,9 @@ int main(int argc, char *argv[])
 		++iteration;
 	}
 
+	/*================================================================================================
+	#	Writing the output file
+	================================================================================================*/
 	// Use of the MPI file IO functions
 	int data_size = thicknessMPI*(nodeX*nodeY + 1); // doubles, data every node has + carrier returns (this is a number, not bytes!)
 	// Prepare the data types and dispalcements for MPI
