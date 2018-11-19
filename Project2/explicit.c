@@ -99,22 +99,23 @@ int main(int argc, char *argv[])
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				if (rank == 1 && iteration >0)
+				/*if (rank == 1 && iteration >0)
 				{
-					//printf("i j k %ld %ld %ld\n", i, j, k);
-					//printf("vector %ld\n", i+j*nodeX+k*nodeX*nodeY);
-					//printf("vector size %ld\n", nodeX*nodeY*thicknessMPI);
-				}
+					printf("i j k %ld %ld %ld\n", i, j, k);
+					printf("vector %ld\n", i+j*nodeX+k*nodeX*nodeY);
+					printf("vector size %ld\n", nodeX*nodeY*thicknessMPI);
+				}*/
+
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				if (rank == 1 && iteration >0)
+				/*if (rank == 1 && iteration >0)
 				{
-					//printf("Cprev i j k %ld %ld %ld\n", ibis, jbis, kbis);
-					//printf("Cprev vector %ld\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
-					//printf("Cprev vector size %ld\n", nodeX*nodeY*(thicknessMPI+2));
-				}
+					printf("Cprev i j k %ld %ld %ld\n", ibis, jbis, kbis);
+					printf("Cprev vector %ld\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
+					printf("Cprev vector size %ld\n", nodeX*nodeY*(thicknessMPI+2));
+				}*/
 
 				/*concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
 
@@ -144,54 +145,69 @@ int main(int argc, char *argv[])
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
 			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
-			//printf("%d to %d\n", commList[commIndex], commList[commIndex+1]);
+			//printf("Node #%d has to send to node #%d.\n", commList[commIndex], commList[commIndex+1]);
 			bool isSender = false;
 			bool isReceiver = false;
 			if (rank == commList[commIndex]) isSender = true;
 			if (rank == commList[commIndex+1]) isReceiver = true;
 			//if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
 			// Need a if here, depending on the rank so that everyone knows what to do asynchronously
-			if (isSender || isReceiver)
+			int klocal = 0;
+			int i = 0;
+			int j = 0;
+			if (isSender)
 			{
-				int klocal = 0;
-				int j = floor((index-klocal*nodeX*nodeY)/nodeX);
-				int i = index - klocal * nodeX * nodeY - j * nodeX;
-				if (isSender)
-				{
-					if (commList[commIndex] > commList[commIndex+1])
-						{ // If sender ID is greater than receiver ID
-							// Send the upper boundary values
-							klocal = 0;
-							for (size_t index = 0; index < nodeX*nodeY; index ++)
-								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+				printf("Node #%d tries to send to %d.\n", rank, commList[commIndex+1]);
+				if (commList[commIndex] > commList[commIndex+1])
+					{ // If sender ID is greater than receiver ID
+						// Send the upper boundary values
+						klocal = 0;
+						for (size_t index = 0; index < nodeX*nodeY; index ++){
+							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
+							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
+							printf("index, i , j : %d %d %d\n", index, i, j);
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
-						else
-						{
-							// Send the lower boundary values
-							klocal = thicknessMPI-1;
-							for (size_t index = 0; index < nodeX*nodeY; index ++)
-								MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
-						}
-				}
-				else{
-					if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
-						// Get the upper boundary values
-						klocal = thicknessMPI-1;
-						for (size_t index = 0; index < nodeX*nodeY; index ++)
-							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
 					}
 					else
 					{
-						// Get the lower boundary values
-						klocal = 0;
-						for (size_t index = 0; index < nodeX*nodeY; index ++)
-							MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						// Send the lower boundary values
+						klocal = thicknessMPI-1;
+						for (size_t index = 0; index < nodeX*nodeY; index ++){
+							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
+							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
+							printf("index, i , j : %d %d %d\n", index, i, j);
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+						}
+						printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
+					}
+			}
+			else if (isReceiver){
+				printf("Node #%d tries to receive from node #%d.\n", rank, commList[commIndex]);
+				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
+					// Get the upper boundary values
+					klocal = thicknessMPI-1;
+					for (size_t index = 0; index < nodeX*nodeY; index ++){
+							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
+							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
+						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+					}
+				}
+				else
+				{
+					// Get the lower boundary values
+					klocal = 0;
+					for (size_t index = 0; index < nodeX*nodeY; index ++){
+							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
+							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
+						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
 				}
 			}
 		}
-		/*if (!(iteration%500))
-		{*/
+
+		// The lines below are OK
 		for(int index=0; index<stopIndex ; index++)
 		{
 			int k = floor(index/(nodeX*nodeY)); // !!! check with k
@@ -241,6 +257,7 @@ int main(int argc, char *argv[])
 
 
 	// Cleaning
+	free(buffer);
 	free(concentration);
 	free(c_);
 	MPI_Finalize();
