@@ -96,30 +96,30 @@ int main(int argc, char *argv[])
 
 			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX-1))
 			{//I am in the domain
-				int k = floor(index/(nodeX*nodeY)); // !!! check with k
+				/*int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				/*if (rank == 1 && iteration >0)
+				if (rank == 1 && iteration >0)
 				{
 					printf("i j k %ld %ld %ld\n", i, j, k);
 					printf("vector %ld\n", i+j*nodeX+k*nodeX*nodeY);
 					printf("vector size %ld\n", nodeX*nodeY*thicknessMPI);
-				}*/
+				}
 
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				/*if (rank == 1 && iteration >0)
+				if (rank == 1 && iteration >0)
 				{
 					printf("Cprev i j k %ld %ld %ld\n", ibis, jbis, kbis);
 					printf("Cprev vector %ld\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
 					printf("Cprev vector size %ld\n", nodeX*nodeY*(thicknessMPI+2));
-				}*/
+				}
 
 				printf("index, i , j, k : %d %d %d %d\n", index, i, j, k);
 
-				/*concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
+				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
 
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
