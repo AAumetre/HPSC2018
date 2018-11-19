@@ -147,13 +147,12 @@ int main(int argc, char *argv[])
 					*/
 				
 
-				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
+				if (rank==0 || rank == world_size-1) onZBoundary = (index <= 2*nodeX*nodeY || index > (thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) valueOnBoundary=true;
 				//{printf("onbound comparison from process %d\n", rank); valueOnBoundary=true; printf("on comparison works from process %d\n", rank);}
-				
 			}
 
 			isXbound++;
@@ -241,10 +240,7 @@ int main(int argc, char *argv[])
 			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
 			//printf("%f ", concentration[i]);
 		}
-
-			/*printf("\n \n \n");
-		} */
-			//printf("iteration %zu ended\n", iteration);
+		//printf("iteration %zu ended\n", iteration);
 		++iteration;
 	}
 
