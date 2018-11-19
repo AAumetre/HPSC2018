@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
-*/
+				*/
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
@@ -157,40 +157,40 @@ int main(int argc, char *argv[])
 			int j = 0;
 			if (isSender)
 			{
-				printf("Node #%d tries to send to %d.\n", rank, commList[commIndex+1]);
+				//printf("Node #%d tries to send to %d.\n", rank, commList[commIndex+1]);
 				if (commList[commIndex] > commList[commIndex+1])
 					{ // If sender ID is greater than receiver ID
 						// Send the upper boundary values
 						klocal = 0;
 						for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
-							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
-							printf("index, i , j : %d %d %d\n", index, i, j);
+							j = floor(index/nodeX);
+							i = index - j*nodeX;
+							//printf("index, i , j : %d %d %d\n", index, i, j);
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
-						printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
+						//printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
 					}
 					else
 					{
 						// Send the lower boundary values
 						klocal = thicknessMPI-1;
 						for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
-							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
-							printf("index, i , j : %d %d %d\n", index, i, j);
+							j = floor(index/nodeX);
+							i = index - j*nodeX;
+							//printf("index, i , j : %d %d %d\n", index, i, j);
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
-						printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
+						//printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
 					}
 			}
 			else if (isReceiver){
-				printf("Node #%d tries to receive from node #%d.\n", rank, commList[commIndex]);
+				//printf("Node #%d tries to receive from node #%d.\n", rank, commList[commIndex]);
 				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 					// Get the upper boundary values
 					klocal = thicknessMPI-1;
 					for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
-							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
+							j = floor(index/nodeX);
+							i = index - j*nodeX;
 						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
 				}
@@ -199,8 +199,8 @@ int main(int argc, char *argv[])
 					// Get the lower boundary values
 					klocal = 0;
 					for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = (int)floor((index-klocal*nodeX*nodeY)/nodeX);
-							i = (int) (index - klocal * nodeX * nodeY - j * nodeX);
+							j = floor(index/nodeX);
+							i = index - j*nodeX;
 						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					}
 				}
