@@ -130,15 +130,16 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
 				*/
 				// Find the right conversion
-				int ijk = i, j, k;
-				int i_p = i+1, j, k;
-				int i_m = i-1, j, k;
-				int j_p = i, j+1, k;
-				int j_m = i, j-1, k;
-				int k_p = i, j, k+1;
-				int k_m = i, j, k-1;
+				int ijk = ;// i, j, k
+				int i_p = ;// i+1, j, k
+				int i_m = ;// i-1, j, k
+				int j_p = ;// i, j+1, k
+				int j_m = ;// i, j-1, k
+				int k_p = ;// i, j, k+1
+				int k_m = ;// i, j, k-1
 
-				concentration[] = c_[ijk] +
+				concentration[] =
+					c_[ijk] +
 					parameters.m * parameters.D * (c_[i_p]+c_[j_p]+c_[k_p]-6*c_[ijk]+c_[i_m]+c_[j_m]+c_[k_m])/pow(parameters.h,2) -
 					parameters.m * parameters.vx * (c_[i_p]-c_[i_m])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[j_p]-c_[j_m])/(2*parameters.h) -
