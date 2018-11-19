@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) //valueOnBoundary=true;
-				{valueOnBoundary=true; printf("onbound comparison works at index %zu for process %d at iteration %zu\n", index, rank, iteration);}
+				{valueOnBoundary=true; printf("onbound comparison works at index %zu for process %d at iteration %zu and C is %f\n", index, rank, iteration, concentration[index]);}
 
 			}
 
