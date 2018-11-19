@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 			//printf("Stage %d from process %zu\n", stage, rank);
 			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
 
-			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX-1))
+			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX)) // !!! -1 enlevé ici
 			{//I am in the domain
 				int k = floor(index/(nodeX*nodeY)); // !!! check with k
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
-				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
+				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) //valueOnBoundary=true;
 				{printf("onbound comparison from process %d\n", rank); valueOnBoundary=true; printf("onbound comparison works from process %d\n", rank);}
