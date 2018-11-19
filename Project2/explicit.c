@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
-				
+
 				// Find the right conversion
 				/*int ijk = ;// i, j, k
 				int i_p = ;// i+1, j, k
@@ -145,15 +145,15 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vy * (c_[j_p]-c_[j_m])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[k_p]-c_[k_m])/(2*parameters.h);
 					*/
-				
+
 
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
-				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
+				{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
-				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
+				printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) valueOnBoundary=true;
-				//{printf("onbound comparison from process %d\n", rank); valueOnBoundary=true; printf("on comparison works from process %d\n", rank);}
-				
+				{printf("onbound comparison from process %d\n", rank); valueOnBoundary=true; printf("onbound comparison works from process %d\n", rank);}
+
 			}
 
 			isXbound++;
