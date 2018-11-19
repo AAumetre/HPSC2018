@@ -147,13 +147,13 @@ int main(int argc, char *argv[])
 					*/
 
 
-				if (rank==0) onZBoundary = (index<2*nodeX*nodeY);
+				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
 				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)) //valueOnBoundary=true;
-				{valueOnBoundary=true; printf("onbound comparison works at index %zu for process %d\n", index, rank);}
+				{valueOnBoundary=true; printf("onbound comparison works at index %zu for process %d at iteration %zu\n", index, rank, iteration);}
 
 			}
 
