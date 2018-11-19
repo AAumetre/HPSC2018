@@ -122,8 +122,8 @@ int main(int argc, char *argv[])
 
 				//printf("index, i , j, k : %d %d %d %d\n", index, i, j, k);
 
-				concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
-
+				concentration[i+j*nodeX+k*nodeX*nodeY] = 
+					c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] +
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY]+
@@ -131,6 +131,7 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
+
 
 				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
 				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
@@ -143,6 +144,7 @@ int main(int argc, char *argv[])
 					valueOnBoundary=true;
 					//printf("onbound comparison works at index %zu for process %d at iteration %zu and C is %f\n", index, rank, iteration, concentration[index]);
 				}
+
 
 				// Send your status to all the other nodes
 				for (int i = 0; i < world_size; ++i){
