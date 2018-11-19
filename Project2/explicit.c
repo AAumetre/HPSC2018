@@ -117,6 +117,8 @@ int main(int argc, char *argv[])
 					printf("Cprev vector size %ld\n", nodeX*nodeY*(thicknessMPI+2));
 				}*/
 
+				printf("index, i , j, k : %d %d %d %d\n", index, i, j, k);
+
 				/*concentration[i+j*nodeX+k*nodeX*nodeY] = c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] + // !!! check with k
 
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
@@ -127,6 +129,22 @@ int main(int argc, char *argv[])
 					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
 					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
 				*/
+				// Find the right conversion
+				int ijk = i, j, k;
+				int i_p = i+1, j, k;
+				int i_m = i-1, j, k;
+				int j_p = i, j+1, k;
+				int j_m = i, j-1, k;
+				int k_p = i, j, k+1;
+				int k_m = i, j, k-1;
+
+				concentration[] = c_[ijk] +
+					parameters.m * parameters.D * (c_[i_p]+c_[j_p]+c_[k_p]-6*c_[ijk]+c_[i_m]+c_[j_m]+c_[k_m])/pow(parameters.h,2) -
+					parameters.m * parameters.vx * (c_[i_p]-c_[i_m])/(2*parameters.h) -
+					parameters.m * parameters.vy * (c_[j_p]-c_[j_m])/(2*parameters.h) -
+					parameters.m * parameters.vz * (c_[k_p]-c_[k_m])/(2*parameters.h);
+				
+
 				if (rank==0 || rank ==world_size-1) onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX);
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-2) || (inStage0 >= nodeY*nodeY-2*nodeX-1));
