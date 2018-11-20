@@ -235,16 +235,15 @@ int main(int argc, char *argv[])
 	MPI_Type_contiguous(data_size, MPI_DOUBLE, &data_type);
 	MPI_Type_commit(&data_type);
 	MPI_Offset disp;
-	disp = rank*(thicknessMPI-nbAdditionalSlices)*(nodeX*nodeY*sizeof(double) + nodeY*sizeof(char)); // Displacement in bytes
-	//printf("Displacement of node #%d is: %d, with %d additional slices\n", rank, disp, nbAdditionalSlices);
-  // Actually open/create the file and set the view the current node has
-	MPI_File_open(MPI_COMM_WORLD, "out.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
-	MPI_File_seek(output_file, disp, MPI_SEEK_SET);
+	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double); // Displacement in bytes
+	// Actually open/create the file and set the view the current node has
+	MPI_File_open(MPI_COMM_WORLD, "results/c_X.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+	//MPI_File_seek(output_file, disp, MPI_SEEK_SET);
+	MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
 
 	int isXbound = 0;
 	int chunk_size = nodeX;
 	int *buffer = malloc(chunk_size*sizeof(double));
-	char *carrier_return[] = {"\n"};
 	for(int i=0; i<thicknessMPI ; ++i){ // For all slices
 		for(int j=0; j<nodeY ; ++j){ // For all y values in the current slice
 			for(int k=0; k<nodeX ; ++k){ // For all x values in the current line
@@ -252,12 +251,11 @@ int main(int argc, char *argv[])
 			}
 			// Once we have a line, write it in the file
 			MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
-			MPI_File_write(output_file, carrier_return, 1, MPI_CHAR, MPI_STATUS_IGNORE);
 		}
 	}
 
 	MPI_File_close(&output_file);
-	printf("Node #%d has finished writing %ld bytes in the output file.\n", rank, data_size*sizeof(double)+(thicknessMPI-nbAdditionalSlices)*nodeY*sizeof(char));
+	printf("Node #%d has finished writing %ld bytes in the output file.\n", rank, data_size*sizeof(double));
 
 	// Cleaning
 	free(stopFlagsFromOthers);
