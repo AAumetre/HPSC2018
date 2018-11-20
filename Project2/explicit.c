@@ -247,11 +247,12 @@ int main(int argc, char *argv[])
 	//MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
 
 	int chunk_size = nodeX;
-	int *buffer = malloc(chunk_size*sizeof(double));
+	double *buffer = malloc(chunk_size*sizeof(double));
 	for(int i=0; i < thicknessMPI ; ++i){ // For all slices
 		for(int j=0; j < nodeY ; ++j){ // For all y values in the current slice
 			for(int k=0; k < nodeX ; ++k){ // For all x values in the current line
 				buffer[k] = concentration[k + nodeX*j + nodeY*nodeX*i]; // Put a line of data in the buffer
+				printf("%f\n", buffer[k]);
 			}
 			// Once we have a line, write it in the file
 			MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
