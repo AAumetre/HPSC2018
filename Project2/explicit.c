@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
 	MPI_Offset disp;
 	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
 	// Set the view the current node has
-	//MPI_File_seek(output_file, disp, MPI_SEEK_SET);
+	MPI_File_seek(output_file, disp, MPI_SEEK_SET);
 	//MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
 
 	int chunk_size = nodeX;
