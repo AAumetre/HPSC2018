@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 	MPI_Type_commit(&data_type);
 
 	// Write the number of values stored in the file
-	size_t N[] = {nodeX*nodeY*nodeZ};
+	size_t N[] = {nodeX};
 	MPI_File_open(MPI_COMM_WORLD, "results/c_X.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 	if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
 
