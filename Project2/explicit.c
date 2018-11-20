@@ -1,3 +1,12 @@
+/*=======================================================================================
+*	This code was written by: 
+*								Antonin Aumètre - antonin.aumetre@gmail.com
+*								Céline Moureau -  cemoureau@gmail.com
+*	For: High Performance Scientific course at ULiège, 2018-19
+*	Project 2
+*
+*	Under GNU General Public License 11/2018
+=======================================================================================*/
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -40,12 +49,12 @@ int main(int argc, char *argv[])
 	{
 		if (thicknessMPI > (double)nodeZ/(double)world_size){
 			thicknessMPI--;
-      nbAdditionalSlices = -1;
-    }
+	  nbAdditionalSlices = -1;
+	}
 		else if(thicknessMPI < (double)nodeZ/(double)world_size){
 			thicknessMPI++;
-      nbAdditionalSlices = 1;
-    }
+	  nbAdditionalSlices = 1;
+	}
 	}
 
 	// Some prints
@@ -80,11 +89,9 @@ int main(int argc, char *argv[])
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/
-  while (iteration <= stopTime && !stopFlag) // ! valueOnBoundary, un seul process s'arrete !
+  while (iteration <= stopTime && !stopFlag)
 	{
-		//if (rank == 1 && iteration>0) printf("enter the iteration loop from process %d\n", rank);
-		//printf("iteration %zu from process %d\n", iteration, rank);
-		//research for boundaries
+		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
 		if (rank == 0) index = nodeX*nodeY;
@@ -94,35 +101,18 @@ int main(int argc, char *argv[])
 		// ============================== Compute internal values
 		for(index=0; index<stopIndex; index++)
 		{
-			//if (rank == 1 && iteration>0) printf("enter the for index %zu from process %d\n", index, rank);
-			int stage = floor(index/(nodeX*nodeY)); // !!! check with k
-			//printf("Stage %d from process %zu\n", stage, rank);
-			int inStage0 = index-stage*nodeX*nodeY; // !!! check with k
+			int stage = floor(index/(nodeX*nodeY));
+			int inStage0 = index-stage*nodeX*nodeY;
 
-			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX)) // !!! -1 enlevé ici
+			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX))
 			{//I am in the domain
-				int k = floor(index/(nodeX*nodeY)); // !!! check with k
+				int k = floor(index/(nodeX*nodeY));
 				int j = floor((index-k*nodeX*nodeY)/nodeX);
 				int i = index - k * nodeX * nodeY - j * nodeX;
-				/*if (rank == 1 && iteration >0)
-				{
-					printf("i j k %ld %ld %ld\n", i, j, k);
-					printf("vector %ld\n", i+j*nodeX+k*nodeX*nodeY);
-					printf("vector size %ld\n", nodeX*nodeY*thicknessMPI);
-				}*/
 
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
-
-				/*if (rank == 1 && iteration >0)
-				{
-					printf("Cprev i j k %ld %ld %ld\n", ibis, jbis, kbis);
-					printf("Cprev vector %ld\n", ibis+jbis*nodeX+kbis*nodeX*nodeY);
-					printf("Cprev vector size %ld\n", nodeX*nodeY*(thicknessMPI+2));
-				}*/
-
-				//printf("index, i , j, k : %d %d %d %d\n", index, i, j, k);
 
 				concentration[i+j*nodeX+k*nodeX*nodeY] = 
 					c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] +
@@ -137,48 +127,41 @@ int main(int argc, char *argv[])
 				// Check the stopping conditions on the boundaries of the domain
 				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
 				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
-				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
-				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
 				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 1e-12)){
-					valueOnBoundary=true;
-					//printf("onbound comparison works at index %zu for process %d at iteration %zu and C is %f\n", index, rank, iteration, concentration[index]);
+				  valueOnBoundary=true;
 				}
 			}
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
 		}
-    // Send your status to all the other nodes
-    for (int i = 0; i < world_size; ++i){
-      if(valueOnBoundary)stopFlags[i] = 1;
-    }
-    MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
-    //printf("On node #%d, at iteration %d and index %d stop flags from others: \n", rank, iteration, index);
-    for (int i = 0; i < world_size; ++i){
-      //printf("%d ", stopFlagsFromOthers[i]);
-      if(stopFlagsFromOthers[i] == 1){
-        stopFlag = true;
-        break;
-      }
-    }
+
+	// Send your status to all the other nodes
+	for (int i = 0; i < world_size; ++i){
+		if(valueOnBoundary)stopFlags[i] = 1;
+	}
+	MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
+	for (int i = 0; i < world_size; ++i){
+		if(stopFlagsFromOthers[i] == 1){
+		stopFlag = true;
+		break;
+		}
+	}
 
 		// ============================== Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
 			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
-			//printf("Node #%d has to send to node #%d.\n", commList[commIndex], commList[commIndex+1]);
 			bool isSender = false;
 			bool isReceiver = false;
 			if (rank == commList[commIndex]) isSender = true;
 			if (rank == commList[commIndex+1]) isReceiver = true;
-			//if (isSender) printf("Line %d in the commList: %d is sending to %d\n", commIndex, commList[commIndex], commList[commIndex+1]);
 			int klocal = 0;
 			int i = 0;
 			int j = 0;
 			if (isSender)
 			{
-				//printf("Node #%d tries to send to %d.\n", rank, commList[commIndex+1]);
 				if (commList[commIndex] > commList[commIndex+1])
 					{ // If sender ID is greater than receiver ID
 						// Send the upper boundary values
@@ -186,10 +169,8 @@ int main(int argc, char *argv[])
 						for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;
-							//printf("index, i , j : %d %d %d\n", index, i, j);
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
-						//printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
 					}
 					else
 					{
@@ -198,14 +179,11 @@ int main(int argc, char *argv[])
 						for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;
-							//printf("index, i , j : %d %d %d\n", index, i, j);
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
 						}
-						//printf("Node #%d has successfully sent its data to node #%d.\n", rank, commList[commIndex+1]);
 					}
 			}
 			else if (isReceiver){
-				//printf("Node #%d tries to receive from node #%d.\n", rank, commList[commIndex]);
 				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 					// Get the upper boundary values
 					klocal = thicknessMPI-1;
@@ -239,7 +217,6 @@ int main(int argc, char *argv[])
 			int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 			int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
-			//printf("%f ", concentration[i]);
 		}
 
 		//printf("iteration %zu ended\n", iteration);
