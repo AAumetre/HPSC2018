@@ -241,7 +241,8 @@ int main(int argc, char *argv[])
 	if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
 
 	MPI_Offset disp;
-	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(size_t); // Displacement in bytes
+	//disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(size_t); // Displacement in bytes
+	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + 1;
 	// Set the view the current node has
 	MPI_File_seek(output_file, disp, MPI_SEEK_SET);
 	//MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
@@ -252,11 +253,13 @@ int main(int argc, char *argv[])
 		for(int j=0; j < nodeY ; ++j){ // For all y values in the current slice
 			for(int k=0; k < nodeX ; ++k){ // For all x values in the current line
 				buffer[k] = concentration[k + nodeX*j + nodeY*nodeX*i]; // Put a line of data in the buffer
-				printf("%f\n", buffer[k]);
+				printf("%f ", buffer[k]);
 			}
 			// Once we have a line, write it in the file
 			MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
+			printf("\n");
 		}
+		printf("\n\n");
 	}
 
 	MPI_File_close(&output_file);
