@@ -241,11 +241,10 @@ int main(int argc, char *argv[])
 	if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
 
 	MPI_Offset disp;
-	//disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(size_t); // Displacement in bytes
-	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + 1;
+	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(size_t); // Displacement in bytes
 	// Set the view the current node has
-	MPI_File_seek(output_file, disp, MPI_SEEK_SET);
-	//MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
+	//MPI_File_seek(output_file, disp, MPI_SEEK_SET);
+	MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
 
 	int chunk_size = nodeX;
 	double *buffer = malloc(chunk_size*sizeof(double));
