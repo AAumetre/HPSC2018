@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <mpi.h>
 
 #include "CSR_BSR.h"
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	if (rank == 0)MPI_File_delete("out.dat", MPI_INFO_NULL);
+	//if (rank == 0)MPI_File_delete("out.dat", MPI_INFO_NULL);
 
 	// Retrieving data from the .dat file
 	Param parameters = readDat(argv[1]);
@@ -42,19 +43,19 @@ int main(int argc, char *argv[])
 	size_t stopTime = parameters.Tmax/parameters.m;
 
 	// Assign each node its nomber of slices (thicknessMPI)
-  double value = ((double)nodeZ/(double)world_size);
+	double value = ((double)nodeZ/(double)world_size);
 	size_t thicknessMPI = myRound(value);
-  int nbAdditionalSlices = 0;
+	int nbAdditionalSlices = 0;
 	if (rank == world_size-1)
 	{
 		if (thicknessMPI > (double)nodeZ/(double)world_size){
 			thicknessMPI--;
-	  nbAdditionalSlices = -1;
-	}
+			nbAdditionalSlices = -1;
+		}
 		else if(thicknessMPI < (double)nodeZ/(double)world_size){
 			thicknessMPI++;
-	  nbAdditionalSlices = 1;
-	}
+			nbAdditionalSlices = 1;
+		}
 	}
 
 	// Some prints
@@ -219,7 +220,10 @@ int main(int argc, char *argv[])
 			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
 		}
 
-		//printf("iteration %zu ended\n", iteration);
+		// Check if files should be savec
+		if (iteration%parameters.S == 0){
+			printf("Should save files !\n");
+		}
 		++iteration;
 	}
 
@@ -237,7 +241,12 @@ int main(int argc, char *argv[])
 
 	// Write the number of values stored in the file
 	unsigned int N[] = {nodeX};
-	MPI_File_open(MPI_COMM_WORLD, "results/c_X.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+	char file_name[20];
+	strcat(file_name, "results/c_");
+	sprintf(file_name, "%ls",N);
+	strcat(file_name, ".dat\0");
+	printf(file_name);
+	MPI_File_open(MPI_COMM_WORLD, "file.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 	if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
 
 	MPI_Offset disp;
