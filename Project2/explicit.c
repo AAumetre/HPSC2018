@@ -252,13 +252,10 @@ int main(int argc, char *argv[])
 		for(int j=0; j < nodeY ; ++j){ // For all y values in the current slice
 			for(int k=0; k < nodeX ; ++k){ // For all x values in the current line
 				buffer[k] = concentration[k + nodeX*j + nodeY*nodeX*i]; // Put a line of data in the buffer
-				printf("%f ", buffer[k]);
 			}
 			// Once we have a line, write it in the file
 			MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
-			printf("\n");
 		}
-		printf("\n\n");
 	}
 
 	MPI_File_close(&output_file);
