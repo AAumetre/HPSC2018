@@ -1,15 +1,17 @@
 /*=======================================================================================
-*	This code was written by: 
-*								Antonin Aumètre - antonin.aumetre@gmail.com
-*								Céline Moureau -  cemoureau@gmail.com
-*	For: High Performance Scientific course at ULiège, 2018-19
-*	Project 2
-*
-*	Under GNU General Public License 11/2018
+*	This code was written by:                                                          *
+*								Antonin Aumètre - antonin.aumetre@gmail.com            *
+*								Céline Moureau -  cemoureau@gmail.com                  *
+*	For: High Performance Scientific course at ULiège, 2018-19                         *
+*	Project 2                                                                          *
+*                             														   *
+*	Originally uploaded to: https://github.com/Cobalt1911                              *
+*	Under GNU General Public License 11/2018                                           *
 =======================================================================================*/
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <mpi.h>
 
 #include "CSR_BSR.h"
@@ -32,7 +34,15 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	if (rank == 0)MPI_File_delete("out.dat", MPI_INFO_NULL);
+
+	// Declare variables for the main loop
+	size_t iteration = 0;
+	bool onBoundary = false;
+	bool onZBoundary = false;
+	bool valueOnBoundary = false;
+	int *stopFlags = calloc(world_size, sizeof(int));
+	int *stopFlagsFromOthers = calloc(world_size, sizeof(int));
+	bool stopFlag = false;
 
 	// Retrieving data from the .dat file
 	Param parameters = readDat(argv[1]);
@@ -41,26 +51,34 @@ int main(int argc, char *argv[])
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	size_t stopTime = parameters.Tmax/parameters.m;
 
+	// If there are more nodes than possible slices, the surplus nodes are set to idle
+	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
+		world_size = nodeZ;
+		if (rank > world_size){ // Idle this node
+			stopFlag = true;
+		}
+	}
+
 	// Assign each node its nomber of slices (thicknessMPI)
-  double value = ((double)nodeZ/(double)world_size);
+	double value = ((double)nodeZ/(double)world_size);
 	size_t thicknessMPI = myRound(value);
-  int nbAdditionalSlices = 0;
+	int nbAdditionalSlices = 0;
 	if (rank == world_size-1)
 	{
 		if (thicknessMPI > (double)nodeZ/(double)world_size){
 			thicknessMPI--;
-	  nbAdditionalSlices = -1;
-	}
+			nbAdditionalSlices = -1;
+		}
 		else if(thicknessMPI < (double)nodeZ/(double)world_size){
 			thicknessMPI++;
-	  nbAdditionalSlices = 1;
-	}
+			nbAdditionalSlices = 1;
+		}
 	}
 
 	// Some prints
 	if (rank == 0) printf("We have %d processes\n", world_size);
 	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
-	printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
+	if (!stopFlag)printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 
 
 	// Get memory for the concentration values
@@ -75,16 +93,7 @@ int main(int argc, char *argv[])
 	size_t kCenter = floor(centerIndex/(nodeX*nodeY));
 	size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
 	if (rank == floor(world_size/2))
-		c_[nodeX*nodeY + nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration; // !!! check with k
-
-	// Declare variables for the main loop
-	size_t iteration = 0;
-	bool onBoundary = false;
-	bool onZBoundary = false;
-	bool valueOnBoundary = false;
-	int *stopFlags = calloc(world_size, sizeof(int));
-	int *stopFlagsFromOthers = calloc(world_size, sizeof(int));
-	bool stopFlag = false;
+		c_[nodeX*nodeY + nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
 
 	/*================================================================================================
 	#	Main loop
@@ -219,54 +228,48 @@ int main(int argc, char *argv[])
 			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
 		}
 
-		//printf("iteration %zu ended\n", iteration);
+		// Check if files should be savec
+		if (iteration%parameters.S == 0){
+			// ============================== Writing the output file
+			// Use of the MPI file IO functions
+			int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
+			// Prepare the data types and dispalcements for MPI
+			MPI_File output_file;
+
+			char file_name[20];
+			sprintf(file_name, "results/c_%ld.dat",iteration);
+
+			MPI_File_open(MPI_COMM_WORLD, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+			unsigned int N[] = {nodeX};
+			if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
+
+			MPI_Offset disp;
+			disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
+			// Set the view the current node has
+			MPI_File_seek(output_file, disp, MPI_SEEK_SET);
+
+			int chunk_size = nodeX;
+			double *buffer = malloc(chunk_size*sizeof(double));
+			for(int i=0; i < thicknessMPI ; ++i){ // For all slices
+				for(int j=0; j < nodeY ; ++j){ // For all y values in the current slice
+					for(int k=0; k < nodeX ; ++k){ // For all x values in the current line
+						buffer[k] = concentration[k + nodeX*j + nodeY*nodeX*i]; // Put a line of data in the buffer
+					}
+					// Once we have a line, write it in the file
+					MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
+				}
+			}
+			MPI_File_close(&output_file);
+		}
 		++iteration;
 	}
-
-
-	/*================================================================================================
-	#	Writing the output file
-	================================================================================================*/
-	// Use of the MPI file IO functions
-	int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
-	// Prepare the data types and dispalcements for MPI
-	MPI_File output_file;
-	MPI_Datatype data_type;
-	MPI_Type_contiguous(data_size, MPI_DOUBLE, &data_type);
-	MPI_Type_commit(&data_type);
-
-	// Write the number of values stored in the file
-	size_t N[] = {nodeX*nodeY*nodeZ};
-	MPI_File_open(MPI_COMM_WORLD, "results/c_explicit.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
-	if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
-
-	MPI_Offset disp;
-	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(size_t); // Displacement in bytes
-	// Set the view the current node has
-	MPI_File_seek(output_file, disp, MPI_SEEK_SET);
-	//MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
-
-	int chunk_size = nodeX;
-	int *buffer = malloc(chunk_size*sizeof(double));
-	for(int i=0; i < thicknessMPI ; ++i){ // For all slices
-		for(int j=0; j < nodeY ; ++j){ // For all y values in the current slice
-			for(int k=0; k < nodeX ; ++k){ // For all x values in the current line
-				buffer[k] = concentration[k + nodeX*j + nodeY*nodeX*i]; // Put a line of data in the buffer
-			}
-			// Once we have a line, write it in the file
-			MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
-		}
-	}
-
-	MPI_File_close(&output_file);
-	printf("Node #%d has finished writing %ld bytes in the output file.\n", rank, data_size*sizeof(double));
 
 	// Cleaning
 	free(stopFlagsFromOthers);
 	free(stopFlags);
-	free(buffer);
 	free(concentration);
 	free(c_);
 	MPI_Finalize();
+	if (rank == 0)printf("Job done !\n");
 	return 0;
 }

@@ -1,11 +1,12 @@
 /*=======================================================================================
-*	This code was written by:
-*								Antonin Aumètre - antonin.aumetre@gmail.com
-*								Céline Moureau -  cemoureau@gmail.com
-*	For: High Performance Scientific course at ULiège, 2018-19
-*	Project 2
-*
-*	Under GNU General Public License 11/2018
+*	This code was written by:                                                          *
+*								Antonin Aumètre - antonin.aumetre@gmail.com            *
+*								Céline Moureau -  cemoureau@gmail.com                  *
+*	For: High Performance Scientific course at ULiège, 2018-19                         *
+*	Project 2                                                                          *
+*                             														   *
+*	Originally uploaded to: https://github.com/Cobalt1911                              *
+*	Under GNU General Public License 11/2018                                           *
 =======================================================================================*/
 
 #include <stdbool.h>
@@ -246,7 +247,7 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	// Does the key insertion in rows and gives the index at which the value was inserted
 	int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
 	bool isPresent = false;
-	int target_index = 0;
+	int target_index = vector->nnzb;
 	int new_nnzb;
 	for (int i = 0; i < vector->nnzb; ++i){ // This part needs to be optimized
 		if (vector->rows[i] == index){
@@ -261,11 +262,11 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	}
 
 	// Case where the key is not already in the list
-	if (!isPresent){
+	if (!isPresent && value != 0){
 		new_nnzb = vector->nnzb+1;
 		double *new_values = malloc(sizeof(double)*new_nnzb);
 		// Create new lists with the correct values
-		for (int i = 0; i < vector->nnzb+1; ++i){
+		for (int i = 0; i < new_nnzb; ++i){
 			if (i == target_index){
 				new_rows[i] = index; // Insertion
 				new_values[i] = value;
@@ -281,7 +282,6 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 		}
 
 		// Setting the new values
-		printf("\nNew nnzb: %d", new_nnzb);
 		int *error_rows = realloc(vector->rows, new_nnzb*sizeof(int));
 		int *error_values = realloc(vector->values, new_nnzb*sizeof(double));
 		if (error_rows == NULL){
@@ -300,7 +300,7 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	}
 
 	// Case where the key is present, only updating the value
-	else {
+	else if (isPresent){
 		vector->values[target_index] = value;
 	}
 }
