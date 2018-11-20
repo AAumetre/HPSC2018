@@ -33,13 +33,19 @@ int main(int argc, char *argv[])
 	size_t stopTime = parameters.Tmax/parameters.m;
 
 	// Assign each node its nomber of slices (thicknessMPI)
+  double value = ((double)nodeZ/(double)world_size);
 	size_t thicknessMPI = myRound(value);
+  int nbAdditionalSlices = 0;
 	if (rank == world_size-1)
 	{
-		if (thicknessMPI>nodeZ/world_size)
+		if (thicknessMPI > (double)nodeZ/(double)world_size){
 			thicknessMPI--;
-		else
+      nbAdditionalSlices = -1;
+    }
+		else if(thicknessMPI < (double)nodeZ/(double)world_size){
 			thicknessMPI++;
+      nbAdditionalSlices = 1;
+    }
 	}
 
 	// Some prints
@@ -74,7 +80,7 @@ int main(int argc, char *argv[])
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/
-	while (iteration <= stopTime && !stopFlag) // ! valueOnBoundary, un seul process s'arrete !
+  while (iteration <= stopTime && !stopFlag) // ! valueOnBoundary, un seul process s'arrete !
 	{
 		//if (rank == 1 && iteration>0) printf("enter the iteration loop from process %d\n", rank);
 		//printf("iteration %zu from process %d\n", iteration, rank);
@@ -134,29 +140,28 @@ int main(int argc, char *argv[])
 				//{printf("onZ comparison from process %d\n", rank); onZBoundary = (index<=2*nodeX*nodeY || index >(thicknessMPI-2)*nodeX*nodeX); printf("onZ comparison works from process %d\n", rank);}
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
 				//printf("onZ %d, onbound %d from process %d\n", onZBoundary, onBoundary, rank);
-				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] != 0)){
+				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 1e-12)){
 					valueOnBoundary=true;
 					//printf("onbound comparison works at index %zu for process %d at iteration %zu and C is %f\n", index, rank, iteration, concentration[index]);
-				}
-
-				// Send your status to all the other nodes
-				for (int i = 0; i < world_size; ++i){
-					if(valueOnBoundary)stopFlags[i] = 1;
-				}
-				MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
-				printf("On node #%d, at iteration %d and index %d stop flags from others: \n", rank, iteration, index);
-				for (int i = 0; i < world_size; ++i){
-					printf("%d ", stopFlagsFromOthers[i]);
-					if(stopFlagsFromOthers[i] == 1){
-						stopFlag = true;
-						break;
-					}
 				}
 			}
 
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
 		}
+    // Send your status to all the other nodes
+    for (int i = 0; i < world_size; ++i){
+      if(valueOnBoundary)stopFlags[i] = 1;
+    }
+    MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
+    //printf("On node #%d, at iteration %d and index %d stop flags from others: \n", rank, iteration, index);
+    for (int i = 0; i < world_size; ++i){
+      //printf("%d ", stopFlagsFromOthers[i]);
+      if(stopFlagsFromOthers[i] == 1){
+        stopFlag = true;
+        break;
+      }
+    }
 
 		// ============================== Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
@@ -253,8 +258,9 @@ int main(int argc, char *argv[])
 	MPI_Type_contiguous(data_size, MPI_DOUBLE, &data_type);
 	MPI_Type_commit(&data_type);
 	MPI_Offset disp;
-	disp = data_size*rank*sizeof(double) + sizeof(char); // Displacement in bytes
-	// Actually open/create the file and set the view the current node has
+	disp = rank*(thicknessMPI-nbAdditionalSlices)*(nodeX*nodeY*sizeof(double) + nodeY*sizeof(char)); // Displacement in bytes
+	//printf("Displacement of node #%d is: %d, with %d additional slices\n", rank, disp, nbAdditionalSlices);
+  // Actually open/create the file and set the view the current node has
 	MPI_File_open(MPI_COMM_WORLD, "out.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 	MPI_File_seek(output_file, disp, MPI_SEEK_SET);
 
@@ -274,7 +280,7 @@ int main(int argc, char *argv[])
 	}
 
 	MPI_File_close(&output_file);
-	printf("Node #%d has finished writing %ld bytes in the output file.\n", rank, data_size*sizeof(double)+thicknessMPI*nodeY*sizeof(char));
+	printf("Node #%d has finished writing %ld bytes in the output file.\n", rank, data_size*sizeof(double)+(thicknessMPI-nbAdditionalSlices)*nodeY*sizeof(char));
 
 	// Cleaning
 	free(stopFlagsFromOthers);
