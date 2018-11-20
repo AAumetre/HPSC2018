@@ -236,12 +236,12 @@ int main(int argc, char *argv[])
 	MPI_Type_commit(&data_type);
 
 	// Write the number of values stored in the file
-	size_t N[] = {nodeX};
+	unsigned int N[] = {nodeX};
 	MPI_File_open(MPI_COMM_WORLD, "results/c_X.dat", MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 	if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
 
 	MPI_Offset disp;
-	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(size_t); // Displacement in bytes
+	disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
 	// Set the view the current node has
 	//MPI_File_seek(output_file, disp, MPI_SEEK_SET);
 	//MPI_File_set_view(output_file, disp, MPI_DOUBLE, data_type, "native", MPI_INFO_NULL);
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 	// Cleaning
 	free(stopFlagsFromOthers);
 	free(stopFlags);
-	free(buffer);
+	//free(buffer);
 	free(concentration);
 	free(c_);
 	MPI_Finalize();
