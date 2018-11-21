@@ -128,20 +128,13 @@ int main(int argc, char **argv){
 	csr_vector_free(&vec6);
 	csr_vector_free(&vec7);
 
+
+	// Setting values on a dynamically allocated vector
 	csr_vector concentration;
 	csr_vector_init_empty(&concentration, 100);
 	// Setting a value
-	for (int i = 0; i < 100; i+=20){ // Segmentation faults for different values of incrementation
+	for (int i = 0; i < 100; i+=1){ // Segmentation faults for different values of incrementation
 		csr_vector_set(&concentration, i, i);
-	}
-
-	printf("\nNew vector's rows: ");
-	for (int i = 0; i < concentration.nnzb; ++i){
-		printf("%d ", concentration.rows[i]);
-	}
-	printf("\nNew vector's values: ");
-	for (int i = 0; i < concentration.nnzb; ++i){
-		printf("%f ", concentration.values[i]);
 	}
 	printf("\n");
 	for (int j = 0; j < 5; ++j){
@@ -150,6 +143,6 @@ int main(int argc, char **argv){
 		}
 		printf("\n");
 	}
-	printf("%.0f ", csr_vector_get(&concentration, 10));
+
 	return(0);
 }

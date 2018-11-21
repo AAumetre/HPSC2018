@@ -292,7 +292,10 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 			printf("Error in values allocation.\n");
 			exit(0);
 		}
+
 		vector->nnzb = new_nnzb;
+		vector->rows = error_rows;
+		vector->values = error_values;
 		for (int i = 0; i < new_nnzb; ++i){
 			vector->rows[i] = new_rows[i];
 			vector->values[i] = new_values[i];
