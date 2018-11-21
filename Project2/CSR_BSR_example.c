@@ -131,13 +131,14 @@ int main(int argc, char **argv){
 
 	// Setting values on a dynamically allocated vector
 	csr_vector concentration;
-	csr_vector_init_empty(&concentration, 100);
+	csr_vector_init_empty(&concentration, 10000);
 	// Setting a value
-	for (int i = 0; i < 100; i+=1){ // Segmentation faults for different values of incrementation
+	for (int i = 0; i < 10000; i+=1){ // Segmentation faults for different values of incrementation
 		csr_vector_set(&concentration, i, i);
 	}
+	csr_vector_set(&concentration, 0, 9999);
 	printf("\n");
-	for (int j = 0; j < 5; ++j){
+	for (int j = 0; j < 500; ++j){
 		for (int i = 0; i < 20; ++i){
 			printf("%.0f ", csr_vector_get(&concentration, i+20*j));
 		}

@@ -181,6 +181,11 @@ int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size
 	for (int i = 0; i < block_count; ++i){
 		matrix->block_columns[i] = temp_block_columns[i];
 	}
+	
+	free(temp_block_row_offsets);
+	free(temp_block_columns);
+	free(temp_values);
+	free(block_matrix);
 }
 
 // Frees the memory, fly away !
@@ -300,10 +305,12 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 			vector->rows[i] = new_rows[i];
 			vector->values[i] = new_values[i];
 		}
+		free(new_values);
 	}
+	free(new_rows);
 
 	// Case where the key is present, only updating the value
-	else if (isPresent){
+	if (isPresent){
 		vector->values[target_index] = value;
 	}
 }
@@ -344,6 +351,8 @@ int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
 		R->rows[i] = adding_list[i];
 		R->values[i] = result[i];
 	}
+	free(result);
+	free(adding_list);
 }
 
 // Does a scalar product between two CSR vectors
@@ -398,4 +407,6 @@ int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_re
 		result_vector[i] = csr_vector_scalar(vector, &csr_row_vector);
 	}
 	csr_vector_init(csr_result_vector, result_vector, matrix->nrows);
+	free(row_vector);
+	free(result_vector);
 }

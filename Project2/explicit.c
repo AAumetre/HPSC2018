@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Some prints
-	if (rank == 0) printf("We have %d processes\n", world_size);
+	if (rank == 0) printf("We have %d nodes\n", world_size);
 	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
 	if (!stopFlag)printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 
