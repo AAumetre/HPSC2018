@@ -14,7 +14,7 @@
 #include <string.h>
 #include <mpi.h>
 
-#include "CSR_BSR.h"
+//#include "CSR_BSR.h"
 #include "fileIO.h"
 
 #define initConcentration 1 //[g/m3]
