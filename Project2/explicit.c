@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 			MPI_File output_file;
 
 			char file_name[20];
-			sprintf(file_name, "./results/c_%ld.dat",iteration);
+			sprintf(file_name, "results/c_%ld.dat",iteration);
 
 			MPI_File_open(MPI_COMM_WORLD, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 			unsigned int N[] = {nodeX};
