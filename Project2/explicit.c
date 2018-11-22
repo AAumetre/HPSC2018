@@ -78,7 +78,8 @@ int main(int argc, char *argv[])
 	// Some prints
 	if (rank == 0) printf("We have %d nodes\n", world_size);
 	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
-	if (!stopFlag)printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
+	if (!stopFlag) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
+	if (rank == 0) printf("Vx, Vy, Vz: %f %f %f\n", parameters.vx, parameters.vy, parameters.vz);
 
 
 	// Get memory for the concentration values
@@ -98,8 +99,7 @@ int main(int argc, char *argv[])
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/
-  while (iteration <= stopTime && !stopFlag)
-	{
+	while (iteration <= stopTime && !stopFlag){
 		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
@@ -141,22 +141,21 @@ int main(int argc, char *argv[])
 				  valueOnBoundary=true;
 				}
 			}
-
 			isXbound++;
 			if(isXbound==nodeX) isXbound = 0;
 		}
 
-	// Send your status to all the other nodes
-	for (int i = 0; i < world_size; ++i){
-		if(valueOnBoundary)stopFlags[i] = 1;
-	}
-	MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
-	for (int i = 0; i < world_size; ++i){
-		if(stopFlagsFromOthers[i] == 1){
-		stopFlag = true;
-		break;
+		// Send your status to all the other nodes
+		for (int i = 0; i < world_size; ++i){
+			if(valueOnBoundary)stopFlags[i] = 1;
 		}
-	}
+		MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
+		for (int i = 0; i < world_size; ++i){
+			if(stopFlagsFromOthers[i] == 1){
+			stopFlag = true;
+			break;
+			}
+		}
 
 		// ============================== Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
@@ -228,37 +227,23 @@ int main(int argc, char *argv[])
 			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
 		}
 
-		// Check if files should be savec
+		// Check if files should be saved
 		if (iteration%parameters.S == 0){
 			// ============================== Writing the output file
 			// Use of the MPI file IO functions
 			int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
-			// Prepare the data types and dispalcements for MPI
 			MPI_File output_file;
-
 			char file_name[20];
 			sprintf(file_name, "results/c_%ld.dat",iteration);
+			unsigned int N[] = {nodeX};
 
 			MPI_File_open(MPI_COMM_WORLD, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
-			unsigned int N[] = {nodeX};
 			if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
-
 			MPI_Offset disp;
 			disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
 			// Set the view the current node has
 			MPI_File_seek(output_file, disp, MPI_SEEK_SET);
-
-			int chunk_size = nodeX;
-			double *buffer = malloc(chunk_size*sizeof(double));
-			for(int i=0; i < thicknessMPI ; ++i){ // For all slices
-				for(int j=0; j < nodeY ; ++j){ // For all y values in the current slice
-					for(int k=0; k < nodeX ; ++k){ // For all x values in the current line
-						buffer[k] = concentration[k + nodeX*j + nodeY*nodeX*i]; // Put a line of data in the buffer
-					}
-					// Once we have a line, write it in the file
-					MPI_File_write(output_file, buffer, chunk_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
-				}
-			}
+			MPI_File_write(output_file, concentration, nodeX*nodeY*thicknessMPI, MPI_DOUBLE, MPI_STATUS_IGNORE);
 			MPI_File_close(&output_file);
 		}
 		++iteration;
