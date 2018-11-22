@@ -15,6 +15,7 @@
 #include <mpi.h>
 
 //#include "CSR_BSR.h"
+#include <algorithms.h>
 #include "fileIO.h"
 
 #define initConcentration 1 //[g/m3]
