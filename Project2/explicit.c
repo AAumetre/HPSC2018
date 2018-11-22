@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				concentration[i+j*nodeX+k*nodeX*nodeY] = 
+				concentration[i+j*nodeX+k*nodeX*nodeY] =
 					c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] +
 					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
 					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
