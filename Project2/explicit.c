@@ -1,10 +1,10 @@
 /*=======================================================================================
 *	This code was written by:                                                          *
-*								Antonin Aumètre - antonin.aumetre@gmail.com            *
-*								Céline Moureau -  cemoureau@gmail.com                  *
+*								Antonin Aumètre - antonin.aumetre@gmail.com              						 *
+*								Céline Moureau -  cemoureau@gmail.com                  							 *
 *	For: High Performance Scientific course at ULiège, 2018-19                         *
 *	Project 2                                                                          *
-*                             														   *
+*                             														   												 *
 *	Originally uploaded to: https://github.com/Cobalt1911                              *
 *	Under GNU General Public License 11/2018                                           *
 =======================================================================================*/
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	  thicknessMPI = floor(value);
 	  int initThickness = thicknessMPI;
 	  if ((rank == world_size-1) && (nodeZ >= (world_size-2)*thicknessMPI)){
-	    thicknessMPI = nodeZ - (world_size-2)*thicknessMPI;
+	    thicknessMPI = nodeZ - (world_size-2)*initThickness;
 	    nbAdditionalSlices = thicknessMPI - initThickness;
 	  }
 	  else if ((rank == world_size-1) && (nodeZ < (world_size-2)*thicknessMPI)){
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 	  }
 	}
 
-	
+
 
 	// Some prints
 	if (rank == 0) printf("Vx, Vy, Vz: %f %f %f\n", parameters.vx, parameters.vy, parameters.vz);
