@@ -115,3 +115,27 @@ double myRound(double value)
 		return floor(value);
 	}
 }
+
+// Finds the index at which a key is present in a sorted list and returns it. Returns -1 if the key was not found.
+int findIndex(int list[], int key, int size){
+	// Linear version, sucks
+	for (int i = 0; i < size; ++i){
+		if (list[i] == key){
+			return i;
+		}
+	}
+	return -1;
+
+	/*int min = 0, max = size, mid = 0;
+	while (list[mid] != key && min != max-1){
+		mid = floor((max+min)/2);
+		if (key >= list[mid]){
+			min = mid;
+		}
+		else{
+			max = mid;
+		}
+	}
+	if (list[mid] == key) return mid;
+	return -1;*/
+}

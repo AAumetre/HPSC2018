@@ -56,6 +56,7 @@ int main(int argc, char **argv){
 	mat.values[11] = 6;
 
 	// Prints out the BSR matrix
+	printf("Prints out the BSR matrix, previously defined by hand\n");
 	for (int j =0 ; j<4 ; ++j){
 		for (int i=0 ; i<4 ; ++i){
 			printf("%.0f ", bsr_get(&mat, j,i));
@@ -65,6 +66,7 @@ int main(int argc, char **argv){
 	bsr_free(&mat);
 
 	// Let's define a matrix the usual way
+	printf("Prints out the BSR matrix, previously defined from a natural matrix\n");
 	double natural2[] = {1.0, 2.0, 3.0,   0.0, 0.0, 0.0,
 						 1.0, 0.0, 1.0,   0.0, 0.0, 0.0,
 						 1.0, 0.0, 2.0,   0.0, 0.0, 0.0,
@@ -91,7 +93,7 @@ int main(int argc, char **argv){
 	csr_vector_init(&vec3, vec_nat3, 6);
 
 	bsr_matrix_vector(&mat3, &vec3, &vec4);
-
+	printf("Does a BSR matrix, CSR vector product\n");
 	printf("\n");
 	for (int i = 0; i < 6; ++i){
 		printf("%.0f\n", csr_vector_get(&vec4, i));
@@ -118,6 +120,7 @@ int main(int argc, char **argv){
 	csr_vector_init(&vec5, vec_nat5, 6);
 	csr_vector_init(&vec6, vec_nat6, 6);
 
+	printf("Adding two vectors\n");
 	csr_vector_add(&vec5, &vec6, &vec7);
 	printf("\n");
 	for (int i = 0; i < 6; ++i){
@@ -130,20 +133,22 @@ int main(int argc, char **argv){
 
 
 	// Setting values on a dynamically allocated vector
+	printf("Dynamically allocates a CSR vector\n");
 	csr_vector concentration;
-	csr_vector_init_empty(&concentration, 10000);
+	csr_vector_init_empty(&concentration, 500);
 	// Setting a value
-	for (int i = 0; i < 10000; i+=1){ // Segmentation faults for different values of incrementation
+	for (int i = 0; i < 500; i+=1){ // Segmentation faults for different values of incrementation
 		csr_vector_set(&concentration, i, i);
 	}
-	csr_vector_set(&concentration, 0, 9999);
 	printf("\n");
-	for (int j = 0; j < 500; ++j){
-		for (int i = 0; i < 20; ++i){
-			printf("%.0f ", csr_vector_get(&concentration, i+20*j));
+	for (int j = 0; j < 20; ++j){
+		for (int i = 0; i < 25; ++i){
+			printf("%.0f ", csr_vector_get(&concentration, i+25*j));
 		}
 		printf("\n");
 	}
+
+
 
 	return(0);
 }

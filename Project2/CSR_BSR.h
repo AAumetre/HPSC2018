@@ -226,19 +226,16 @@ void csr_vector_init_empty(csr_vector *vector, int nrows){
 	vector->values = malloc(sizeof(double)*0);
 }
 
-// TODO : implementation in O(ln(n)), taking the half each time
+// Returns the value of a vector at a given index
 double csr_vector_get(csr_vector *vector, int index){
 	if (index >= vector->nrows){
 		printf("!!! Index out of bounds.\n");
 		return -1;
 	}
 
-	int looking_index = 0;
-	while (looking_index < vector->nnzb && vector->rows[looking_index] < index){
-		++looking_index;
-	}
-	if (vector->rows[looking_index] == index)return vector->values[looking_index];
-	else return 0;
+	int looking_index = findIndex(vector->rows, index, vector->nnzb);
+	if (looking_index > 0) return vector->values[looking_index];
+	return 0;
 }
 
 // Sets a value at a given index of a CSR vector

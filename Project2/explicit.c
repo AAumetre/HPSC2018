@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
 	#	Main loop
 	================================================================================================*/
 	while (iteration <= stopTime && !stopFlag){
+		printf("%d\n", iteration);
 		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
