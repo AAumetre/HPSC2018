@@ -232,9 +232,8 @@ double csr_vector_get(csr_vector *vector, int index){
 		printf("!!! Index out of bounds.\n");
 		return -1;
 	}
-
 	int looking_index = findIndex(vector->rows, index, vector->nnzb);
-	if (looking_index > 0) return vector->values[looking_index];
+	if (looking_index >= 0) return vector->values[looking_index];
 	return 0;
 }
 
@@ -251,7 +250,7 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	bool isPresent = false;
 	int target_index = vector->nnzb;
 	int new_nnzb;
-	for (int i = 0; i < vector->nnzb; ++i){ // This part needs to be optimized
+	for (int i = 0; i < vector->nnzb; ++i){ // <==== This part needs to be optimized
 		if (vector->rows[i] == index){
 			isPresent = true;
 			target_index = i;

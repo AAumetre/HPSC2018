@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
 	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
 		world_size = nodeZ;
 		if (rank > world_size){ // Idle this node
+			printf("Node %d was set to idle.\n", rank);
 			stopFlag = true;
 		}
 	}
@@ -100,7 +101,7 @@ int main(int argc, char *argv[])
 	#	Main loop
 	================================================================================================*/
 	while (iteration <= stopTime && !stopFlag){
-		printf("%d\n", iteration);
+		//printf("Iteration: %ld\n", iteration);
 		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
