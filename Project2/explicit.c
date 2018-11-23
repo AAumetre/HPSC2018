@@ -51,10 +51,13 @@ int main(int argc, char *argv[])
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	size_t stopTime = parameters.Tmax/parameters.m;
 
+	if (rank == 0) printf("We have %d nodes\n", world_size);
+	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
+	MPI_Barrier(MPI_COMM_WORLD);
 	// If there are more nodes than possible slices, the surplus nodes are set to idle
 	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
 		world_size = nodeZ;
-		if (rank > world_size){ // Idle this node
+		if (rank > world_size){ // Idle this node       <====== Should be >=
 			printf("Node %d was set to idle.\n", rank);
 			stopFlag = true;
 		}
@@ -77,10 +80,12 @@ int main(int argc, char *argv[])
 	}
 
 	// Some prints
-	if (rank == 0) printf("We have %d nodes\n", world_size);
-	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
-	if (!stopFlag) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 	if (rank == 0) printf("Vx, Vy, Vz: %f %f %f\n", parameters.vx, parameters.vy, parameters.vz);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (!stopFlag) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (rank == 0) printf("=====================================\n");
+	MPI_Barrier(MPI_COMM_WORLD);
 
 
 	// Get memory for the concentration values
@@ -96,12 +101,11 @@ int main(int argc, char *argv[])
 	size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
 	if (rank == floor(world_size/2))
 		c_[nodeX*nodeY + nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
-
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/
 	while (iteration <= stopTime && !stopFlag){
-		//printf("Iteration: %ld\n", iteration);
+		printf("Iteration: %ld\n", iteration);
 		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
