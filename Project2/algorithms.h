@@ -104,38 +104,33 @@ int * getCommListSlices(unsigned int size){
 // Natural round-off
 double myRound(double value)
 {
-	if (ceil(value)-value < value-floor(value))
-	{
-		//printf("ceil: %f", ceil(value));
-		return ceil(value);
-	}
-	else
-	{
-		//printf("floor %f\n", floor(value));
-		return floor(value);
-	}
+	if (ceil(value)-value < value-floor(value)) return ceil(value);
+	else return floor(value);
 }
 
 // Finds the index at which a key is present in a sorted list and returns it. Returns -1 if the key was not found.
 int findIndex(int list[], int key, int size){
-	// Linear version, sucks
-	for (int i = 0; i < size; ++i){
+	// Linear version, sucks. O(n)
+	/*for (int i = 0; i < size; ++i){
 		if (list[i] == key){
 			return i;
 		}
 	}
-	return -1;
+	return -1;*/
 
-	/*int min = 0, max = size, mid = 0;
-	while (list[mid] != key && min != max-1){
+	// Much better O(ln(n)+1)
+	int min = 0, max = size, mid = 0;
+	while (min <= max){
 		mid = floor((max+min)/2);
-		if (key >= list[mid]){
-			min = mid;
+		if (list[mid] < key){
+			min = mid + 1;
 		}
-		else{
-			max = mid;
+		else if (list[mid] > key){
+			max = mid - 1;
+		}
+		else {
+			return mid;
 		}
 	}
-	if (list[mid] == key) return mid;
-	return -1;*/
+	return -1;
 }

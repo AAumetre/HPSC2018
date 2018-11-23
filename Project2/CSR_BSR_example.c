@@ -83,6 +83,7 @@ int main(int argc, char **argv){
 		}
 		printf("\n");
 	}
+	printf("\n");
 
 
 	// CSR vectors
@@ -94,18 +95,18 @@ int main(int argc, char **argv){
 
 	bsr_matrix_vector(&mat3, &vec3, &vec4);
 	printf("Does a BSR matrix, CSR vector product\n");
-	printf("\n");
 	for (int i = 0; i < 6; ++i){
 		printf("%.0f\n", csr_vector_get(&vec4, i));
 	}
 
 	// Let's normalize that result
 	double scale = 1/csr_vector_norm(&vec4);
-	printf("\nScaling by a factor of %.4f:\n", scale);
+	printf("\nScaling by a factor of %.4f (normalizing):\n", scale);
 	csr_vector_scale(&vec4, scale);
 	for (int i = 0; i < 6; ++i){
 		printf("%.4f\n", csr_vector_get(&vec4, i));
 	}
+	printf("\n");
 	bsr_free(&mat3);
 	csr_vector_free(&vec3);
 	csr_vector_free(&vec4);
@@ -120,20 +121,20 @@ int main(int argc, char **argv){
 	csr_vector_init(&vec5, vec_nat5, 6);
 	csr_vector_init(&vec6, vec_nat6, 6);
 
-	printf("Adding two vectors\n");
+	printf("Adding two vectors");
 	csr_vector_add(&vec5, &vec6, &vec7);
 	printf("\n");
 	for (int i = 0; i < 6; ++i){
 		printf("%.0f\n", csr_vector_get(&vec7, i));
 	}
-
+	printf("\n");
 	csr_vector_free(&vec5);
 	csr_vector_free(&vec6);
 	csr_vector_free(&vec7);
 
 
 	// Setting values on a dynamically allocated vector
-	printf("Dynamically allocates a CSR vector\n");
+	printf("Dynamically allocates a CSR vector");
 	csr_vector concentration;
 	csr_vector_init_empty(&concentration, 500);
 	// Setting a value
@@ -147,7 +148,14 @@ int main(int argc, char **argv){
 		}
 		printf("\n");
 	}
+	printf("\n");
 
+	// findIndex function test
+	printf("Testing the findIndex function:\n");
+	int A[] = {0,1,2,3,7,8,9};
+	for (int i = 0; i < 10; ++i){
+		printf("They key %d can be found at index %d.\n", i, findIndex(A, i, 7));
+	}
 
 
 	return(0);
