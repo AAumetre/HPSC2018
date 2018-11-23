@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 	int *stopFlags = calloc(world_size, sizeof(int));
 	int *stopFlagsFromOthers = calloc(world_size, sizeof(int));
 	bool stopFlag = false;
+	bool isIdle = false;
 
 	// Retrieving data from the .dat file
 	Param parameters = readDat(argv[1]);
@@ -57,16 +58,18 @@ int main(int argc, char *argv[])
 	// If there are more nodes than possible slices, the surplus nodes are set to idle
 	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
 		world_size = nodeZ;
-		if (rank > world_size){ // Idle this node       <====== Should be >=
+		if (rank >= world_size){ // Idle this node
 			printf("Node %d was set to idle.\n", rank);
-			stopFlag = true;
+			isIdle = true; //                                     <========== not stopFlag anymore ! Allows to run, should fix
 		}
 	}
 
 	// Assign each node its nomber of slices (thicknessMPI)
-	double value = ((double)nodeZ/(double)world_size);
+	//Old version
+	/*double value = ((double)nodeZ/(double)world_size);
 	size_t thicknessMPI = myRound(value);
 	int nbAdditionalSlices = 0;
+
 	if (rank == world_size-1)
 	{
 		if (thicknessMPI > (double)nodeZ/(double)world_size){
@@ -77,12 +80,44 @@ int main(int argc, char *argv[])
 			thicknessMPI++;
 			nbAdditionalSlices = 1;
 		}
+	}*/
+	int nbAdditionalSlices = 0;
+	size_t thicknessMPI = 0;
+	double value = ((double)nodeZ/(double)world_size);
+	if (world_size > 11){
+	  thicknessMPI = floor(value);
+	  int initThickness = thicknessMPI;
+	  if ((rank == world_size-1) && (nodeZ >= (world_size-2)*thicknessMPI)){
+	    thicknessMPI = nodeZ - (world_size-2)*thicknessMPI;
+	    nbAdditionalSlices = thicknessMPI - initThickness;
+	  }
+	  else if ((rank == world_size-1) && (nodeZ < (world_size-2)*thicknessMPI)){
+	    thicknessMPI = (world_size-2)*thicknessMPI - nodeZ;
+	    nbAdditionalSlices = thicknessMPI - initThickness;
+	  }
 	}
+	else{
+	  // Assign each node its nomber of slices (thicknessMPI)
+	  thicknessMPI = myRound(value);
+	  nbAdditionalSlices = 0;
+	  if (rank == world_size-1){
+	    if (thicknessMPI > (double)nodeZ/(double)world_size){
+	      thicknessMPI--;
+	      nbAdditionalSlices = -1;
+	    }
+	    else if(thicknessMPI < (double)nodeZ/(double)world_size){
+	      thicknessMPI++;
+	      nbAdditionalSlices = 1;
+	    }
+	  }
+	}
+
+	
 
 	// Some prints
 	if (rank == 0) printf("Vx, Vy, Vz: %f %f %f\n", parameters.vx, parameters.vy, parameters.vz);
 	MPI_Barrier(MPI_COMM_WORLD);
-	if (!stopFlag) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
+	if (!isIdle) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0) printf("=====================================\n");
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -105,7 +140,7 @@ int main(int argc, char *argv[])
 	#	Main loop
 	================================================================================================*/
 	while (iteration <= stopTime && !stopFlag){
-		printf("Iteration: %ld\n", iteration);
+		if (rank == 0) printf("Iteration: %ld\n", iteration);
 		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
@@ -167,6 +202,7 @@ int main(int argc, char *argv[])
 		int *commList = getCommListSlices(world_size);
 		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
 			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
+			//printf("S#%d R%d\n", commList[commIndex], commList[commIndex+1]);
 			bool isSender = false;
 			bool isReceiver = false;
 			if (rank == commList[commIndex]) isSender = true;
