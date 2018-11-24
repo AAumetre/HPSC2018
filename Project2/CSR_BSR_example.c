@@ -75,7 +75,7 @@ int main(int argc, char **argv){
 						 0.0, 0.0, 0.0,   1.0, 1.0, 2.0,
 					   	 0.0, 0.0, 0.0,   6.0, 1.0, 2.0};
 	bsr_matrix mat3; 
-	natural_to_bsr(natural2, &mat3, sqrt(sizeof(natural2)/sizeof(natural2[0])), 3); // Convert it to BSR
+	convert_natural_to_bsr(natural2, &mat3, sqrt(sizeof(natural2)/sizeof(natural2[0])), 3); // Convert it to BSR
 	// And print it out to check
 	for (int j =0 ; j<6 ; ++j){
 		for (int i=0 ; i<6 ; ++i){

@@ -48,7 +48,7 @@ struct csr_vector{
 // Prototypes
 void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
 double bsr_get(bsr_matrix *matrix, int i, int j);
-int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
+int convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
 void bsr_free(bsr_matrix *matrix);
 /*==============*/
 void csr_vector_init(csr_vector *vector, double *natural, int nrows);
@@ -112,7 +112,7 @@ return matrix->values[offset];
 }
 
 // Takes a matrix written as a 1D array and stores it as a bsr matrix!
-int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
+int convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
 
 	if (size%block_size != 0){ // The block size is incompatible with the matrix size
 		printf("!!! The block size is incompatible with the matrix size.\n");
