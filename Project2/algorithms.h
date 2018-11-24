@@ -142,6 +142,13 @@ int * shareWorkload(int problemSize, int nNodes){
 	int *solution = malloc(3*sizeof(int));
 	solution[2] = 1000;
 
+	if (nNodes == 1) {
+		solution[0] = 0;
+		solution[1] = problemSize;
+		solution[2] = problemSize;
+		return solution;
+	}
+
 	// Get a bunch of solution and score them
 	for (int m = 1 ; m < problemSize; ++ m){
 		if ((problemSize-m)%(nNodes-1) == 0){

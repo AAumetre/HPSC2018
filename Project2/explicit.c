@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
 	Param parameters = readDat(argv[1]);
 	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	size_t stopTime = parameters.Tmax/parameters.m;
 
 	if (rank == 0) {
@@ -58,20 +57,40 @@ int main(int argc, char *argv[])
 		printf("=====================================\n");
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
+
 	// If there are more nodes than possible slices, the surplus nodes are set to idle
+	int *ranks = calloc(world_size, sizeof(int));
 	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
 		world_size = nodeZ;
+		for (int i = 0; i < nodeZ; ++i){
+			ranks[i] = i;
+		}
 		if (rank >= world_size){ // Idle this node
 			printf("Node %d was set to idle.\n", rank);
-			isIdle = true; //                                     <========== not stopFlag anymore ! Allows to run, should fix
+			isIdle = true;
+			stopFlag = true;
 		}
 	}
+	else{
+		for (int i = 0; i < world_size; ++i){
+			ranks[i] = i;
+		}
+	}
+
+	// If there are some idling nodes, exclude them from the new communicator
+	MPI_Group world_group;
+	MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+	MPI_Group sub_world_group;
+	MPI_Group_incl(world_group, world_size, ranks, &sub_world_group);
+	// Define the new communiator associated with the sub-group
+	MPI_Comm SUB_COMM;
+	MPI_Comm_create_group(MPI_COMM_WORLD, sub_world_group, 0, &SUB_COMM);
 
 	// Assign each node its nomber of slices (thicknessMPI)
 	int nbAdditionalSlices = 0;
 	size_t thicknessMPI = 0;
 	int *share = shareWorkload(nodeZ, world_size);
-	if (rank == world_size-1){
+	if (rank == world_size-1 && world_size != 1){
 		thicknessMPI = share[0];
 		nbAdditionalSlices = share[0]-share[1];
 	}
@@ -83,8 +102,6 @@ int main(int argc, char *argv[])
 	if (!isIdle) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0) printf("=====================================\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-
 
 	// Get memory for the concentration values
 	double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
@@ -102,12 +119,14 @@ int main(int argc, char *argv[])
 		c_[initValueIndex] = initConcentration; 
 		printf("Initial value set on node #%d, at index %d\n", rank, initValueIndex);
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/
+	if (rank == 0) printf("Iteration: ");
 	while (iteration <= stopTime && !stopFlag){
-		if (rank == 0) printf("Iteration: %ld\n", iteration);
+		if (rank == 0) printf("%ld ", iteration);
 		// Search for boundaries
 		size_t isXbound = 0;
 		size_t index = 0;
@@ -157,7 +176,7 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < world_size; ++i){
 			if(valueOnBoundary)stopFlags[i] = 1;
 		}
-		MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, MPI_COMM_WORLD);
+		MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, SUB_COMM);
 		for (int i = 0; i < world_size; ++i){
 			if(stopFlagsFromOthers[i] == 1){
 			stopFlag = true;
@@ -186,7 +205,7 @@ int main(int argc, char *argv[])
 						for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 						}
 					}
 					else
@@ -196,7 +215,7 @@ int main(int argc, char *argv[])
 						for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, MPI_COMM_WORLD);
+							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 						}
 					}
 			}
@@ -207,7 +226,7 @@ int main(int argc, char *argv[])
 					for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 					}
 				}
 				else
@@ -217,7 +236,7 @@ int main(int argc, char *argv[])
 					for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 					}
 				}
 			}
@@ -246,7 +265,7 @@ int main(int argc, char *argv[])
 			sprintf(file_name, "results/c_%ld.dat",iteration);
 			unsigned int N[] = {nodeX};
 
-			MPI_File_open(MPI_COMM_WORLD, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+			MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 			if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
 			MPI_Offset disp;
 			disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
@@ -261,8 +280,13 @@ int main(int argc, char *argv[])
 	// Cleaning
 	free(stopFlagsFromOthers);
 	free(stopFlags);
+	free(share);
+	free(ranks);
 	free(concentration);
 	free(c_);
+	MPI_Group_free(&world_group);
+	MPI_Group_free(&sub_world_group);
+	if (!isIdle) MPI_Comm_free(&SUB_COMM);
 	MPI_Finalize();
 	if (rank == 0)printf("Job done !\n");
 	return 0;
