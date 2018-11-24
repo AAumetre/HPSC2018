@@ -35,6 +35,11 @@ int main(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+	//Check out the time
+	clock_t begin = clock();
+	clock_t end = clock();
+	double time_spent;
+
 	// Declare variables for the main loop
 	size_t iteration = 0;
 	bool onBoundary = false;
@@ -287,7 +292,11 @@ int main(int argc, char *argv[])
 	MPI_Group_free(&world_group);
 	MPI_Group_free(&sub_world_group);
 	if (!isIdle) MPI_Comm_free(&SUB_COMM);
+	if (rank == 0){
+		end = clock();
+		time_spent = (double)(end - begin) / (CLOCKS_PER_SEC);
+		printf("\nJob done in %2.4lf s, using %d nodes.\n", time_spent, world_size);
+	}
 	MPI_Finalize();
-	if (rank == 0)printf("Job done !\n");
 	return 0;
 }
