@@ -156,6 +156,11 @@ int main(int argc, char **argv){
 	for (int i = 0; i < 10; ++i){
 		printf("They key %d can be found at index %d.\n", i, findIndex(A, i, 7));
 	}
+	printf("\n");
+
+	// Test the function that gives each nodes its workload
+	int *share = shareWorkload(41,16);
+	printf("The best sharing is m=%d, n=%d\n", share[0], share[1]);
 
 
 	return(0);

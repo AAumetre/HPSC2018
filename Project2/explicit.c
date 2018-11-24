@@ -52,8 +52,11 @@ int main(int argc, char *argv[])
 	size_t centerIndex = nodeX*nodeY*floor(nodeZ/2)+ floor(nodeY/2)*nodeX + floor(nodeX/2);
 	size_t stopTime = parameters.Tmax/parameters.m;
 
-	if (rank == 0) printf("We have %d nodes\n", world_size);
-	if (rank == 0) printf("Number of slices: %zu\n", nodeZ);
+	if (rank == 0) {
+		printf("We have %d nodes\n", world_size);
+		printf("Number of slices: %zu\n", nodeZ);
+		printf("=====================================\n");
+	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	// If there are more nodes than possible slices, the surplus nodes are set to idle
 	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
@@ -65,57 +68,17 @@ int main(int argc, char *argv[])
 	}
 
 	// Assign each node its nomber of slices (thicknessMPI)
-	//Old version
-	/*double value = ((double)nodeZ/(double)world_size);
-	size_t thicknessMPI = myRound(value);
-	int nbAdditionalSlices = 0;
-
-	if (rank == world_size-1)
-	{
-		if (thicknessMPI > (double)nodeZ/(double)world_size){
-			thicknessMPI--;
-			nbAdditionalSlices = -1;
-		}
-		else if(thicknessMPI < (double)nodeZ/(double)world_size){
-			thicknessMPI++;
-			nbAdditionalSlices = 1;
-		}
-	}*/
 	int nbAdditionalSlices = 0;
 	size_t thicknessMPI = 0;
-	double value = ((double)nodeZ/(double)world_size);
-	if (world_size > 11){
-	  thicknessMPI = floor(value);
-	  int initThickness = thicknessMPI;
-	  if ((rank == world_size-1) && (nodeZ >= (world_size-2)*thicknessMPI)){
-	    thicknessMPI = nodeZ - (world_size-2)*initThickness;
-	    nbAdditionalSlices = thicknessMPI - initThickness;
-	  }
-	  else if ((rank == world_size-1) && (nodeZ < (world_size-2)*thicknessMPI)){
-	    thicknessMPI = (world_size-2)*thicknessMPI - nodeZ;
-	    nbAdditionalSlices = thicknessMPI - initThickness;
-	  }
+	int *share = shareWorkload(nodeZ, world_size);
+	if (rank == world_size-1){
+		thicknessMPI = share[0];
+		nbAdditionalSlices = share[0]-share[1];
 	}
-	else{
-	  // Assign each node its nomber of slices (thicknessMPI)
-	  thicknessMPI = myRound(value);
-	  nbAdditionalSlices = 0;
-	  if (rank == world_size-1){
-	    if (thicknessMPI > (double)nodeZ/(double)world_size){
-	      thicknessMPI--;
-	      nbAdditionalSlices = -1;
-	    }
-	    else if(thicknessMPI < (double)nodeZ/(double)world_size){
-	      thicknessMPI++;
-	      nbAdditionalSlices = 1;
-	    }
-	  }
-	}
-
-
+	else thicknessMPI = share[1];
 
 	// Some prints
-	if (rank == 0) printf("Vx, Vy, Vz: %f %f %f\n", parameters.vx, parameters.vy, parameters.vz);
+	if (rank == 0) printf("Vx, Vy, Vz: %.2f %.2f %.2f\n", parameters.vx, parameters.vy, parameters.vz);
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (!isIdle) printf("Thickness = %zu, for rank %d\n", thicknessMPI, rank);
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -132,10 +95,14 @@ int main(int argc, char *argv[])
 	}
 
 	// Give initial concentration value
-	size_t kCenter = floor(centerIndex/(nodeX*nodeY));
-	size_t klocalCenter = kCenter - floor(world_size/2)*thicknessMPI;
-	if (rank == floor(world_size/2))
-		c_[nodeX*nodeY + nodeX/2+ nodeZ/2 * nodeX + klocalCenter*nodeX*nodeZ] = initConcentration;
+	int middleSliceIndex = floor(nodeZ/2);
+	int rankMiddle = floor(middleSliceIndex/(thicknessMPI-nbAdditionalSlices));
+	if (rank == rankMiddle){
+		int initValueIndex = nodeX*floor(nodeY/2) + floor(nodeX/2) + nodeX*nodeY*(middleSliceIndex-rank*(thicknessMPI-nbAdditionalSlices));
+		c_[initValueIndex] = initConcentration; 
+		printf("Initial value set on node #%d, at index %d\n", rank, initValueIndex);
+	}
+
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/

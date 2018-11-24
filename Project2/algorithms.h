@@ -17,6 +17,8 @@
 int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
 int * getCommListSlices(unsigned int size);
 double myRound(double value);
+int findIndex(int list[], int key, int size);
+int * shareWorkload(int problemSize, int nNodes);
 
 /*=====================================================================================*/
 // Implementation
@@ -102,8 +104,7 @@ int * getCommListSlices(unsigned int size){
 }
 
 // Natural round-off
-double myRound(double value)
-{
+double myRound(double value){
 	if (ceil(value)-value < value-floor(value)) return ceil(value);
 	else return floor(value);
 }
@@ -133,4 +134,27 @@ int findIndex(int list[], int key, int size){
 		}
 	}
 	return -1;
+}
+
+// Function that shares the workload
+// TODO : use 3 or 4 different numbers of slices, m, n, o, p. Will improve load sharing.
+int * shareWorkload(int problemSize, int nNodes){
+	int *solution = malloc(3*sizeof(int));
+	solution[2] = 1000;
+
+	// Get a bunch of solution and score them
+	for (int m = 1 ; m < problemSize; ++ m){
+		if ((problemSize-m)%(nNodes-1) == 0){
+			//printf("m=%d, n=%d, delta=%d\n", m, (problemSize-m)/(nNodes-1), abs(m-(problemSize-m)/(nNodes-1)));
+			// Keep the best one (lowest delta)
+			if (abs(m-(problemSize-m)/(nNodes-1)) < solution[2]){
+				solution[0] = m;
+				solution[1] = (problemSize-m)/(nNodes-1);
+				solution[2] = abs(m-solution[1]);
+			}
+		}
+	}
+	// The first argument is the number of slices to give to the last node
+	// The second argument is the number of slices to give to every other nodes
+	return solution;
 }
