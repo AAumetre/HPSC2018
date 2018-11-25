@@ -162,6 +162,20 @@ int main(int argc, char **argv){
 	int *share = shareWorkload(41,16);
 	printf("The best sharing is m=%d, n=%d\n", share[0], share[1]);
 
+	// Key insertion algorithm test
+	printf("\nKey insertion algorithm test\n");
+	int rows[] = {0,1,2,5,8,9, 0};
+	insertKey_int(rows, 7, 7);
+	for (int i = 0; i < 7; ++i){
+		printf("%d ", rows[i]);
+	}
+
+	// Resizing function test
+	csr_vector test_vector;
+	csr_vector_init(&test_vector, vec_nat5, 6);
+	printf("\n\nSize before resizing: %d bytes\n", sizeof(test_vector.rows)); // doesn't work, return the size of the pointer
+	//void csr_vector_resize(csr_vector *vector, int new_nnzb)
+
 
 	return(0);
 }
