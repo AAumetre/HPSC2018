@@ -61,6 +61,7 @@ int csr_vector_set(csr_vector *vector, double value, int index);
 void csr_vector_resize(csr_vector *vector, int new_nnzb);
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
 double csr_vector_norm(csr_vector *P);
+void csr_vector_equals(csr_vector *P, csr_vector *Q);
 void csr_vector_free(csr_vector *vector);
 /*==============*/
 int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
@@ -346,6 +347,16 @@ void csr_vector_resize(csr_vector *vector, int new_nnzb){
 		}
 		vector->rows = ptr_rows;
 		vector->values = ptr_values;
+	}
+}
+
+// Copies the data from Q into P ( P = Q )
+void csr_vector_equals(csr_vector *P, csr_vector *Q){
+	csr_vector_resize(P, Q->nnzb);
+	P->nnzb = Q->nnzb;
+	for (int i = 0; i < P->nnzb; ++i){
+		P->rows[i] = Q->rows[i];
+		P->values[i] = Q->values[i];
 	}
 }
 

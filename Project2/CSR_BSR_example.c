@@ -170,6 +170,22 @@ int main(int argc, char **argv){
 	for (int i = 0; i < 7; ++i){
 		printf("%d ", rows[i]);
 	}
-	
+
+	// CSR equals function test
+	csr_vector vec10;
+	csr_vector_init(&vec10, vec_nat5, 6);
+	csr_vector vec11;
+	csr_vector_init_empty(&vec11, 6);
+	printf("\n\nCSR equals function test\nFirst vector:      ");
+	for (int i = 0; i < 6; ++i){
+		printf("%d ", csr_vector_get(&vec10, i));
+	}
+	csr_vector_equals(&vec11, &vec10);
+	printf("\nAfter affectation: ");
+	for (int i = 0; i < 6; ++i){
+		printf("%d ", csr_vector_get(&vec11, i));
+	}
+	printf("\n");
+
 	return(0);
 }
