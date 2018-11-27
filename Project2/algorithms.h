@@ -17,6 +17,10 @@
 int merge_sorted_lists(int list_A[], int list_B[], int list_C[], int size_A, int size_B);
 int * getCommListSlices(unsigned int size);
 double myRound(double value);
+int findIndex(int list[], int key, int size);
+int * shareWorkload(int problemSize, int nNodes);
+int insertKey_int(int list[], int key, int size);
+void insertKeyAt_double(double list[], double key, int size, int target_index);
 
 /*=====================================================================================*/
 // Implementation
@@ -102,23 +106,14 @@ int * getCommListSlices(unsigned int size){
 }
 
 // Natural round-off
-double myRound(double value)
-{
+double myRound(double value){
 	if (ceil(value)-value < value-floor(value)) return ceil(value);
 	else return floor(value);
 }
 
 // Finds the index at which a key is present in a sorted list and returns it. Returns -1 if the key was not found.
+// O(ln(n)+1)
 int findIndex(int list[], int key, int size){
-	// Linear version, sucks. O(n)
-	/*for (int i = 0; i < size; ++i){
-		if (list[i] == key){
-			return i;
-		}
-	}
-	return -1;*/
-
-	// Much better O(ln(n)+1)
 	int min = 0, max = size, mid = 0;
 	while (min <= max){
 		mid = floor((max+min)/2);
@@ -133,4 +128,53 @@ int findIndex(int list[], int key, int size){
 		}
 	}
 	return -1;
+}
+
+// Function that shares the workload
+// TODO : use 3 or 4 different numbers of slices, m, n, o, p. Will improve load sharing.
+int * shareWorkload(int problemSize, int nNodes){
+	int *solution = malloc(3*sizeof(int));
+	solution[2] = 1000;
+
+	if (nNodes == 1) {
+		solution[0] = 0;
+		solution[1] = problemSize;
+		solution[2] = problemSize;
+		return solution;
+	}
+
+	// Get a bunch of solution and score them
+	for (int m = 1 ; m < problemSize; ++ m){
+		if ((problemSize-m)%(nNodes-1) == 0){
+			//printf("m=%d, n=%d, delta=%d\n", m, (problemSize-m)/(nNodes-1), abs(m-(problemSize-m)/(nNodes-1)));
+			// Keep the best one (lowest delta)
+			if (abs(m-(problemSize-m)/(nNodes-1)) < solution[2]){
+				solution[0] = m;
+				solution[1] = (problemSize-m)/(nNodes-1);
+				solution[2] = abs(m-solution[1]);
+			}
+		}
+	}
+	// The first argument is the number of slices to give to the last node
+	// The second argument is the number of slices to give to every other nodes
+	return solution;
+}
+
+// Inserts a key in a list, returns the index, does not prevent redundance.
+int insertKey_int(int list[], int key, int size){
+	int index = size-1;
+	while(index > 0 && key < list[index-1]){
+		list[index] = list[index -1];
+		-- index;
+	}
+	list[index] = key;
+	return index;
+}
+
+// Inserts a key in a list, returns the index, does not prevent redundance.
+void insertKeyAt_double(double list[], double key, int size, int target_index){
+	for (int i = size-1; i > target_index; --i){
+		list[i] = list[i-1]; // Shifting
+	}
+	list[target_index] = key;
 }

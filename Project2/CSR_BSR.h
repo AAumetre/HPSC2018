@@ -48,7 +48,7 @@ struct csr_vector{
 // Prototypes
 void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int nnzb);
 double bsr_get(bsr_matrix *matrix, int i, int j);
-int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
+int convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
 void bsr_free(bsr_matrix *matrix);
 /*==============*/
 void csr_vector_init(csr_vector *vector, double *natural, int nrows);
@@ -112,7 +112,7 @@ return matrix->values[offset];
 }
 
 // Takes a matrix written as a 1D array and stores it as a bsr matrix!
-int natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
+int convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
 
 	if (size%block_size != 0){ // The block size is incompatible with the matrix size
 		printf("!!! The block size is incompatible with the matrix size.\n");
@@ -241,12 +241,34 @@ double csr_vector_get(csr_vector *vector, int index){
 // TODO : do it efficiently !
 int csr_vector_set(csr_vector *vector, double value, int index){
 	if (index >= vector->nrows){
-		printf("!!! Index out of bounds.\n");
-		return -1;
-	}
+			printf("!!! Index out of bounds.\n");
+			return -1;
+		}
 
 	// Does the key insertion in rows and gives the index at which the value was inserted
-	int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
+	int target_index;
+	// Checks if a value already exists at this index
+	target_index = findIndex(vector->rows, index, vector->nnzb);
+	if (target_index != -1){ // Case where the key is present, only updating the value
+		vector->values[target_index] = value;
+	}
+	else if (value != 0){
+		int new_nnzb = vector->nnzb+1;
+		// Increase size of rows and values
+		/* Need a function that:
+			- checks the avalaible free space in vector->rows for instance
+			- re-allocates some more memory if needed, by either a power of 2 or a fixed size chunk
+			- check if all went well and handles problems 
+		*/
+		// Insert the key in rows
+		target_index = insertKey_int(vector->rows, index, vector->nnzb);
+		// Insert value in values at the same index
+		insertKeyAt_double(vector->values, value, new_nnzb, target_index);
+		vector->nnzb = new_nnzb;
+	}
+
+	// Old version
+	/*int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
 	bool isPresent = false;
 	int target_index = vector->nnzb;
 	int new_nnzb;
@@ -308,8 +330,9 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	// Case where the key is present, only updating the value
 	if (isPresent){
 		vector->values[target_index] = value;
-	}
+	}*/
 }
+
 
 // Scales a CSR vector
 void csr_vector_scale(csr_vector *vector, double scaling_factor){
@@ -371,6 +394,14 @@ double csr_vector_scalar(csr_vector *P, csr_vector *Q){
 // Computes the Euclidian norm of a CSR vector
 double csr_vector_norm(csr_vector *P){
 	return sqrt(csr_vector_scalar(P,P));
+}
+
+void csr_vector_resize(csr_vector *vector, int new_nnzb){
+	/* Need a function that:
+			- checks the avalaible free space in vector->rows for instance
+			- re-allocates some more memory if needed, by either a power of 2 or a fixed size chunk
+			- check if all went well and handles problems 
+	*/
 }
 
 // Frees the memory
