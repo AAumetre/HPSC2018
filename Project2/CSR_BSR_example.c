@@ -150,6 +150,7 @@ int main(int argc, char **argv){
 	}
 	printf("\n");
 
+
 	// findIndex function test
 	printf("Testing the findIndex function:\n");
 	int A[] = {0,1,2,3,7,8,9};
@@ -169,13 +170,6 @@ int main(int argc, char **argv){
 	for (int i = 0; i < 7; ++i){
 		printf("%d ", rows[i]);
 	}
-
-	// Resizing function test
-	csr_vector test_vector;
-	csr_vector_init(&test_vector, vec_nat5, 6);
-	printf("\n\nSize before resizing: %d bytes\n", sizeof(test_vector.rows)); // doesn't work, return the size of the pointer
-	//void csr_vector_resize(csr_vector *vector, int new_nnzb)
-
-
+	
 	return(0);
 }
