@@ -1,5 +1,5 @@
 /*=======================================================================================
-*	This code was written by: 
+*	This code was written by:
 *								Antonin Aumètre - antonin.aumetre@gmail.com
 *								Céline Moureau -  cemoureau@gmail.com
 *	For: High Performance Scientific course at ULiège, 2018-19
@@ -9,7 +9,6 @@
 =======================================================================================*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <stdbool.h>
 #include <math.h>
 
@@ -27,7 +26,7 @@ int main(int argc, char **argv){
 	// Manually setting a BSR matrix
 	/*
 	1 2 3 3
-	1 0 1 2 
+	1 0 1 2
 	0 0 2 1
 	0 0 0 6
 	*/
@@ -74,7 +73,7 @@ int main(int argc, char **argv){
 						 0.0, 0.0, 0.0,   6.0, 1.0, 2.0,
 						 0.0, 0.0, 0.0,   1.0, 1.0, 2.0,
 					   	 0.0, 0.0, 0.0,   6.0, 1.0, 2.0};
-	bsr_matrix mat3; 
+	bsr_matrix mat3;
 	convert_natural_to_bsr(natural2, &mat3, sqrt(sizeof(natural2)/sizeof(natural2[0])), 3); // Convert it to BSR
 	// And print it out to check
 	for (int j =0 ; j<6 ; ++j){
