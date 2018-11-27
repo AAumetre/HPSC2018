@@ -41,6 +41,7 @@ struct csr_vector{
 	int nnzb; // # of non-zero values
 	unsigned int *rows;
 	double *values;
+	int mem_size; // in # of elements, not bytes
 };
 
 /*=====================================================================================*/
@@ -57,6 +58,7 @@ double csr_vector_get(csr_vector *vector, int index);
 void csr_vector_scale(csr_vector *vector, double scale);
 int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
 int csr_vector_set(csr_vector *vector, double value, int index);
+void csr_vector_resize(csr_vector *vector, int new_nnzb);
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
 double csr_vector_norm(csr_vector *P);
 void csr_vector_free(csr_vector *vector);
@@ -208,6 +210,7 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 	vector->nnzb = temp_nnzb;
 	vector->rows = malloc(sizeof(int) * temp_nnzb);
 	vector->values = malloc(sizeof(double) * temp_nnzb);
+	vector->mem_size = temp_nnzb;
 	int index = 0;
 	for (int i = 0; i < nrows; ++i){
 		if (natural[i] != 0){
@@ -222,8 +225,9 @@ void csr_vector_init(csr_vector *vector, double *natural, int nrows){
 void csr_vector_init_empty(csr_vector *vector, int nrows){
 	vector->nrows = nrows;
 	vector->nnzb = 0;
-	vector->rows = malloc(sizeof(int)*0);
-	vector->values = malloc(sizeof(double)*0);
+	vector->rows = malloc(sizeof(int));
+	vector->values = malloc(sizeof(double));
+	vector->mem_size = 1;
 }
 
 // Returns the value of a vector at a given index
@@ -255,82 +259,13 @@ int csr_vector_set(csr_vector *vector, double value, int index){
 	else if (value != 0){
 		int new_nnzb = vector->nnzb+1;
 		// Increase size of rows and values
-		/* Need a function that:
-			- checks the avalaible free space in vector->rows for instance
-			- re-allocates some more memory if needed, by either a power of 2 or a fixed size chunk
-			- check if all went well and handles problems 
-		*/
+		csr_vector_resize(vector, new_nnzb);
+		vector->nnzb = new_nnzb;
 		// Insert the key in rows
 		target_index = insertKey_int(vector->rows, index, vector->nnzb);
 		// Insert value in values at the same index
 		insertKeyAt_double(vector->values, value, new_nnzb, target_index);
-		vector->nnzb = new_nnzb;
 	}
-
-	// Old version
-	/*int *new_rows = malloc(sizeof(int)*(vector->nnzb+1));
-	bool isPresent = false;
-	int target_index = vector->nnzb;
-	int new_nnzb;
-	for (int i = 0; i < vector->nnzb; ++i){ // <==== This part needs to be optimized
-		if (vector->rows[i] == index){
-			isPresent = true;
-			target_index = i;
-			break;
-		}
-		if (vector->rows[i] > index){
-			target_index = i;
-			break;
-		}
-	}
-
-	// Case where the key is not already in the list
-	if (!isPresent && value != 0){
-		new_nnzb = vector->nnzb+1;
-		double *new_values = malloc(sizeof(double)*new_nnzb);
-		// Create new lists with the correct values
-		for (int i = 0; i < new_nnzb; ++i){
-			if (i == target_index){
-				new_rows[i] = index; // Insertion
-				new_values[i] = value;
-			}
-			else if(i > target_index){
-				new_rows[i] = vector->rows[i-1];
-				new_values[i] = vector->values[i-1];
-			}
-			else {
-				new_rows[i] = vector->rows[i];
-				new_values[i] = vector->values[i];
-			}
-		}
-
-		// Setting the new values
-		int *error_rows = realloc(vector->rows, new_nnzb*sizeof(int));
-		int *error_values = realloc(vector->values, new_nnzb*sizeof(double));
-		if (error_rows == NULL){
-			printf("Error in rows allocation.\n");
-			exit(0);
-		}
-		if (error_values == NULL){
-			printf("Error in values allocation.\n");
-			exit(0);
-		}
-
-		vector->nnzb = new_nnzb;
-		vector->rows = error_rows;
-		vector->values = error_values;
-		for (int i = 0; i < new_nnzb; ++i){
-			vector->rows[i] = new_rows[i];
-			vector->values[i] = new_values[i];
-		}
-		free(new_values);
-	}
-	free(new_rows);
-
-	// Case where the key is present, only updating the value
-	if (isPresent){
-		vector->values[target_index] = value;
-	}*/
 }
 
 
@@ -396,12 +331,22 @@ double csr_vector_norm(csr_vector *P){
 	return sqrt(csr_vector_scalar(P,P));
 }
 
+// Resizes the memory allocated to a csr_vector type
 void csr_vector_resize(csr_vector *vector, int new_nnzb){
-	/* Need a function that:
-			- checks the avalaible free space in vector->rows for instance
-			- re-allocates some more memory if needed, by either a power of 2 or a fixed size chunk
-			- check if all went well and handles problems 
-	*/
+	// Check if new space is needed
+	if (vector->mem_size < new_nnzb){
+		if (vector->mem_size == 0) vector->mem_size = 1;
+		vector->mem_size *= 2;
+		unsigned int *ptr_rows = realloc(vector->rows, vector->mem_size*sizeof(int));
+		double *ptr_values = realloc(vector->values, vector->mem_size*sizeof(double));
+		// Should check if !NULL
+		if (ptr_rows == NULL || ptr_values == NULL){
+			printf("\nMem ERR0R !\n");
+			exit(1);
+		}
+		vector->rows = ptr_rows;
+		vector->values = ptr_values;
+	}
 }
 
 // Frees the memory
