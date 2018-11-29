@@ -58,16 +58,16 @@ double bsr_get(bsr_matrix *matrix, int i_, int j_) {
 	i_ -= i_block_start;
 	j_ -= j_block_start;
 
-offset += i_*matrix->block_size + j_;
-return matrix->values[offset];
+	offset += i_*matrix->block_size + j_;
+	return matrix->values[offset];
 }
 
 // Takes a matrix written as a 1D array and stores it as a bsr matrix!
-int convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
+void convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size) {
 
 	if (size%block_size != 0){ // The block size is incompatible with the matrix size
 		printf("!!! The block size is incompatible with the matrix size.\n");
-		return -1;
+		exit(1);
 	}
 	unsigned int b_size = size/block_size;
 	unsigned int *temp_block_row_offsets = malloc(sizeof(int) * (b_size + 1));
@@ -157,20 +157,59 @@ void coo_matrix_init_empty(coo_matrix *matrix, int nrows, int ncolumns){
 	matrix->rows = malloc(sizeof(int));
 	matrix->columns = malloc(sizeof(int));
 	matrix->values = malloc(sizeof(double));
+	matrix->mem_size = 1;
 }
 
 // Fetches a value from the COO matrix
-double coo_get(coo_matrix *matrix, int i, int j){
-
+double coo_matrix_get(coo_matrix *matrix, int i, int j){
+	int row_index = 0;
+	for (int k = 0; k < matrix->nnzb; ++k){
+		if (matrix->rows[k] == i && matrix->columns[k] == j){
+			//printf("k: %d\n", k);
+			return matrix->values[k];
+		}
+	}
+	return 0;
 }
 
 // Takes a matrix written as a 1D array and stores it as a COO matrix!
-int convert_natural_to_coo(double *natural, coo_matrix *matrix, int size){
+void convert_natural_to_coo(double *natural, coo_matrix *matrix, int size){
+	if (size != matrix->nrows*matrix->ncolumns){
+		printf("!!! Matrix dimensions mismatch.\n");
+		exit(1);
+	}
+	matrix->nnzb = -1;
+	for (int i = 0; i < size; ++i){
+		if (natural[i] != 0){
+			++ matrix->nnzb;
+			coo_matrix_resize(matrix, matrix->nnzb);
+			matrix->rows[matrix->nnzb] = floor(i/matrix->nrows);
+			matrix->columns[matrix->nnzb] = i - matrix->nrows*floor(i/matrix->nrows);
+			matrix->values[matrix->nnzb] = natural[i];
+		}
+	}
+}
 
+// Resizes the memory allocated to a csr_vector type
+void coo_matrix_resize(coo_matrix *matrix, int new_nnzb){
+	// Check if new space is needed
+	if (matrix->mem_size < new_nnzb){
+		matrix->mem_size *= 2;
+		unsigned int *ptr_rows = realloc(matrix->rows, matrix->mem_size*sizeof(int));
+		unsigned int *ptr_columns = realloc(matrix->columns, matrix->mem_size*sizeof(int));
+		double *ptr_values = realloc(matrix->values, matrix->mem_size*sizeof(double));
+		if (ptr_rows == NULL || ptr_columns == NULL || ptr_values == NULL){
+			printf("\nMem ERR0R !\n");
+			exit(1);
+		}
+		matrix->rows = ptr_rows;
+		matrix->columns = ptr_columns;
+		matrix->values = ptr_values;
+	}
 }
 
 // Frees the memory, fly away !
-void coo_free(coo_matrix *matrix){
+void coo_matrix_free(coo_matrix *matrix){
 	free(matrix->rows);
 	free(matrix->columns);
 	free(matrix->values);	
@@ -220,11 +259,11 @@ double csr_vector_get(csr_vector *vector, int index){
 }
 
 // Sets a value at a given index of a CSR vector
-int csr_vector_set(csr_vector *vector, double value, int index){
+void csr_vector_set(csr_vector *vector, double value, int index){
 	if (index >= vector->nrows){
-			printf("!!! Index out of bounds.\n");
-			return -1;
-		}
+		printf("!!! Index out of bounds.\n");
+		exit(1);
+	}
 
 	// Does the key insertion in rows and gives the index at which the value was inserted
 	int target_index;
@@ -254,10 +293,10 @@ void csr_vector_scale(csr_vector *vector, double scaling_factor){
 }
 
 // Sums two CSR vectors and stores the result in a third vector
-int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
+void csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
 	if (P->nrows != Q->nrows){
 		printf("!!! Vector dimensions mismatch.\n");
-		return -1;
+		exit(1);
 	}
 
 	double *result = malloc(sizeof(double)*P->nrows);
@@ -290,7 +329,7 @@ int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R){
 double csr_vector_scalar(csr_vector *P, csr_vector *Q){
 	if (P->nrows != Q->nrows){
 		printf("!!! Vector dimensions mismatch.\n");
-		return -1;
+		exit(1);
 	}
 	double result = 0;
 	int index_Q = 0;
@@ -331,10 +370,10 @@ void csr_vector_resize(csr_vector *vector, int new_nnzb){
 }
 
 // Copies the data from Q into P ( P = Q )
-int csr_vector_equals(csr_vector *P, csr_vector *Q){
+void csr_vector_equals(csr_vector *P, csr_vector *Q){
 	if (P->nrows != Q->nrows){
 		printf("!!! Vector dimensions mismatch.\n");
-		return -1;
+		exit(1);
 	}
 	csr_vector_resize(P, Q->nnzb);
 	P->nnzb = Q->nnzb;
@@ -367,10 +406,10 @@ void nat_vector_scale(nat_vector *vector, double scaling_factor){
 }
 
 // Sums two natural vectors and stores the result in a third vector
-int nat_vector_add(nat_vector *P, nat_vector *Q, nat_vector *R){
+void nat_vector_add(nat_vector *P, nat_vector *Q, nat_vector *R){
 	if (P->nrows != Q->nrows || P->nrows != R->nrows){
 		printf("!!! Vector dimensions mismatch.\n");
-		return -1;
+		exit(1);
 	}
 	for (int i = 0; i < P->nrows; ++i){
 		R->values[i] = P->values[i] + Q->values[i];
@@ -398,10 +437,10 @@ double nat_vector_norm(nat_vector *P){
 }
 
 // Copies the data from Q into P ( P = Q )
-int nat_vector_equals(nat_vector *P, nat_vector *Q){
+void nat_vector_equals(nat_vector *P, nat_vector *Q){
 	if (P->nrows != Q->nrows){
 		printf("!!! Vector dimensions mismatch.\n");
-		return -1;
+		exit(1);
 	}
 	for (int i = 0; i < P->nrows; ++i){
 		P->values[i] = Q->values[i];
@@ -413,12 +452,12 @@ void nat_vector_free(nat_vector *vector){
 	free(vector->values);
 }
 
-/*============== BSR Matrix & CSR Vector functions ===================*/
+/*============== Matrix & Vector functions ===================*/
 // Does a BSR matrix/vector product
-int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
+void bsr_matrix_csr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector){
 	if (vector->nrows != matrix->nrows){
 		printf("!!! Matrix and vector dimensions mismatch.\n");
-		return -1;
+		exit(1);
 	}
 
 	double *row_vector = malloc(sizeof(double)*matrix->nrows);
@@ -438,4 +477,22 @@ int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_re
 	csr_vector_init(csr_result_vector, result_vector, matrix->nrows);
 	free(row_vector);
 	free(result_vector);
+}
+
+// Does a BSR matrix/ CSR vector product
+void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *result){
+	if (vector->nrows != matrix->ncolumns){
+		printf("!!! Matrix and vector dimensions mismatch.\n");
+		exit(1);
+	}
+	nat_vector row_vector;
+	nat_vector_init(&row_vector, matrix->ncolumns);
+	for (int i = 0; i < matrix->nrows; ++i){
+		// Get a row vector
+		for (int j = 0; j < matrix->ncolumns; ++j){
+			row_vector.values[j] = coo_matrix_get(matrix, i, j);
+		}
+		result->values[i] = nat_vector_scalar(&row_vector, vector);
+	}
+	nat_vector_free(&row_vector);
 }

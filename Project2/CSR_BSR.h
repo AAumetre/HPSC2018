@@ -35,6 +35,7 @@ struct coo_matrix{
 	unsigned int *rows;
 	unsigned int *columns;
 	double *values;
+	int mem_size;
 };
 
 typedef struct csr_vector csr_vector;
@@ -61,7 +62,7 @@ void bsr_init(bsr_matrix *matrix, int nrows, int ncolumns, int block_size, int n
 double bsr_get(bsr_matrix *matrix, int i, int j);
 
 // Takes a matrix written as a 1D array and stores it as a BSR matrix!
-int convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
+void convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int block_size);
 
 // Frees the memory, fly away !
 void bsr_free(bsr_matrix *matrix);
@@ -69,16 +70,19 @@ void bsr_free(bsr_matrix *matrix);
 /*====================== COO Matrix ======================================================*/
 
 // Initialization function, sets all the variables and arrays from the structure
-void coo_matrix_init(coo_matrix *matrix, int nrows, int ncolumns, int nnzb);
+void coo_matrix_init_empty(coo_matrix *matrix, int nrows, int ncolumns);
 
 // Fetches a value from the COO matrix
-double coo_get(coo_matrix *matrix, int i, int j);
+double coo_matrix_get(coo_matrix *matrix, int i, int j);
 
 // Takes a matrix written as a 1D array and stores it as a COO matrix!
-int convert_natural_to_coo(double *natural, coo_matrix *matrix, int size);
+void convert_natural_to_coo(double *natural, coo_matrix *matrix, int size);
+
+// Resizes the memory allocated to a csr_vector type
+void coo_matrix_resize(coo_matrix *matrix, int new_nnzb);
 
 // Frees the memory, fly away !
-void coo_free(coo_matrix *matrix);
+void coo_matrix_free(coo_matrix *matrix);
 
 /*====================== CSR Vector ======================================================*/
 // Initialization function, sets all the variables and arrays from the structure
@@ -91,13 +95,13 @@ void csr_vector_init_empty(csr_vector *vector, int nrows);
 double csr_vector_get(csr_vector *vector, int index);
 
 // Sets a value at a given index of a CSR vector
-int csr_vector_set(csr_vector *vector, double value, int index);
+void csr_vector_set(csr_vector *vector, double value, int index);
 
 // Scales a CSR vector
 void csr_vector_scale(csr_vector *vector, double scale);
 
 // Sums two CSR vectors and stores the result in a third vector
-int csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
+void csr_vector_add(csr_vector *P, csr_vector *Q, csr_vector *R);
 
 // Does a scalar product between two CSR vectors
 double csr_vector_scalar(csr_vector *P, csr_vector *Q);
@@ -109,7 +113,7 @@ double csr_vector_norm(csr_vector *P);
 void csr_vector_resize(csr_vector *vector, int new_nnzb);
 
 // Copies the data from Q into P ( P = Q )
-int csr_vector_equals(csr_vector *P, csr_vector *Q);
+void csr_vector_equals(csr_vector *P, csr_vector *Q);
 
 // Frees the memory
 void csr_vector_free(csr_vector *vector);
@@ -122,7 +126,7 @@ void nat_vector_init(nat_vector *vector, int nrows);
 void nat_vector_scale(nat_vector *vector, double scale);
 
 // Sums two natural vectors and stores the result in a third vector
-int nat_vector_add(nat_vector *P, nat_vector *Q, nat_vector *R);
+void nat_vector_add(nat_vector *P, nat_vector *Q, nat_vector *R);
 
 // Does a scalar product between two natural vectors
 double nat_vector_scalar(nat_vector *P, nat_vector *Q);
@@ -131,11 +135,14 @@ double nat_vector_scalar(nat_vector *P, nat_vector *Q);
 double nat_vector_norm(nat_vector *P);
 
 // Copies the data from Q into P ( P = Q )
-int nat_vector_equals(nat_vector *P, nat_vector *Q);
+void nat_vector_equals(nat_vector *P, nat_vector *Q);
 
 // Frees the memory
 void nat_vector_free(nat_vector *vector);
 
 /*====================== BSR CSR ========================================================*/
-// Does a BSR matrix/vector product
-int bsr_matrix_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
+// Does a BSR matrix/ CSR vector product
+void bsr_matrix_csr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *csr_result_vector);
+
+// Does a BSR matrix/ CSR vector product
+void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *result);

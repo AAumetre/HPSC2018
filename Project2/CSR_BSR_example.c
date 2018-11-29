@@ -91,7 +91,7 @@ int main(int argc, char **argv){
 	double vec_nat3[] =  {0,1,4,0,2,0};
 	csr_vector_init(&vec3, vec_nat3, 6);
 
-	bsr_matrix_vector(&mat3, &vec3, &vec4);
+	bsr_matrix_csr_vector(&mat3, &vec3, &vec4);
 	printf("Does a BSR matrix, CSR vector product\n");
 	for (int i = 0; i < 6; ++i){
 		printf("%.0f\n", csr_vector_get(&vec4, i));
@@ -188,21 +188,62 @@ int main(int argc, char **argv){
 	/* =============================== */
 	// Natural vectors
 	nat_vector nat1;
-	nat_vector_init(&nat1, 5);
-	for (int i=0; i < 5; ++i){
+	nat_vector_init(&nat1, 6);
+	for (int i=0; i < 6; ++i){
 		nat1.values[i] = 10*i;
 	}
 	printf("\nNatural vector: \n");
-	for (int i = 0; i < 5; ++i){
+	for (int i = 0; i < 6; ++i){
 		printf("%.1f ", nat1.values[i]);
 	}
 	printf("\nEuclidian norm: %.2f\n", nat_vector_norm(&nat1));
 	nat_vector_scale(&nat1, 1/nat_vector_norm(&nat1));
 	printf("Normalized natural vector: \n");
-	for (int i = 0; i < 5; ++i){
+	for (int i = 0; i < 6; ++i){
 		printf("%.1f ", nat1.values[i]);
 	}
-	nat_vector_free(&nat1);
+	printf("\n\n");
 
+	// COO matrix
+	printf("COO matrices test\n");
+	coo_matrix coo1;
+	coo_matrix_init_empty(&coo1, 6, 6);
+	convert_natural_to_coo(natural2, &coo1, 36);
+	printf("Rows: ");
+	for (int i = 0; i < coo1.nnzb; ++i){
+		printf("%d ", coo1.rows[i]);
+	}
+	printf("\nColumns: ");
+	for (int i = 0; i < coo1.nnzb; ++i){
+		printf("%d ", coo1.columns[i]);
+	}
+	printf("\nValues: ");
+	for (int i = 0; i < coo1.nnzb; ++i){
+		printf("%.0f ", coo1.values[i]);
+	}
+	printf("\n");
+	for (int i = 0; i < 6; ++i){
+		for (int j = 0; j < 6; ++j){
+			printf("%.0f ", coo_matrix_get(&coo1, i, j));
+		}
+		printf("\n");
+	}
+
+	printf("\nCOO matrix and natural vector product\n");
+	for (int i = 0; i < 6; ++i){
+		nat1.values[i] = 1;
+	}
+	nat_vector nat2;
+	nat_vector_init(&nat2, 6);
+	coo_matrix_nat_vector(&coo1, &nat1, &nat2);
+	for (int i = 0; i < 6; ++i){
+		printf("%.1f ", nat2.values[i]);
+	}
+	printf("\n");
+
+	//nat_vector_free(&nat1);
+	nat_vector_free(&nat2);
+	coo_matrix_free(&coo1);
+	
 	return(0);
 }
