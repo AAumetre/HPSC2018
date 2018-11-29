@@ -8,5 +8,5 @@ clear
 #mpicc -g -o Main explicitCSR.c -lm -std=c99 -fopenmp
 #mpiexec -np 2 ./Main param_small.dat
 
-gcc -o Main CSR_BSR_example.c -lm -std=c99
+gcc CSR_BSR_example.c CSR_BSR.c algorithms.c -o Main -lm -std=c99
 ./Main

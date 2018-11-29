@@ -9,11 +9,10 @@
 =======================================================================================*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <math.h>
 
 #include "CSR_BSR.h"
-
+#include "algorithms.h"
 /*=====================================================================================
 * Provides examples for the use of the CSR/BSR library
 =====================================================================================*/
@@ -177,14 +176,33 @@ int main(int argc, char **argv){
 	csr_vector_init_empty(&vec11, 6);
 	printf("\n\nCSR equals function test\nFirst vector:      ");
 	for (int i = 0; i < 6; ++i){
-		printf("%d ", csr_vector_get(&vec10, i));
+		printf("%.1f ", csr_vector_get(&vec10, i));
 	}
 	csr_vector_equals(&vec11, &vec10);
 	printf("\nAfter affectation: ");
 	for (int i = 0; i < 6; ++i){
-		printf("%d ", csr_vector_get(&vec11, i));
+		printf("%.1f ", csr_vector_get(&vec11, i));
 	}
 	printf("\n");
+
+	/* =============================== */
+	// Natural vectors
+	nat_vector nat1;
+	nat_vector_init(&nat1, 5);
+	for (int i=0; i < 5; ++i){
+		nat1.values[i] = 10*i;
+	}
+	printf("\nNatural vector: \n");
+	for (int i = 0; i < 5; ++i){
+		printf("%.1f ", nat1.values[i]);
+	}
+	printf("\nEuclidian norm: %.2f\n", nat_vector_norm(&nat1));
+	nat_vector_scale(&nat1, 1/nat_vector_norm(&nat1));
+	printf("Normalized natural vector: \n");
+	for (int i = 0; i < 5; ++i){
+		printf("%.1f ", nat1.values[i]);
+	}
+	nat_vector_free(&nat1);
 
 	return(0);
 }
