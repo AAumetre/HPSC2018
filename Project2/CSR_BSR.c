@@ -147,6 +147,35 @@ void bsr_free(bsr_matrix *matrix) {
 }
 
 
+/*====================== COO Matrix ======================================================*/
+
+// Initialization function, sets all the variables and arrays from the structure
+void coo_matrix_init_empty(coo_matrix *matrix, int nrows, int ncolumns){
+	matrix->nrows = nrows;
+	matrix->ncolumns = ncolumns;
+	matrix->nnzb = 0;
+	matrix->rows = malloc(sizeof(int));
+	matrix->columns = malloc(sizeof(int));
+	matrix->values = malloc(sizeof(double));
+}
+
+// Fetches a value from the COO matrix
+double coo_get(coo_matrix *matrix, int i, int j){
+
+}
+
+// Takes a matrix written as a 1D array and stores it as a COO matrix!
+int convert_natural_to_coo(double *natural, coo_matrix *matrix, int size){
+
+}
+
+// Frees the memory, fly away !
+void coo_free(coo_matrix *matrix){
+	free(matrix->rows);
+	free(matrix->columns);
+	free(matrix->values);	
+}
+
 /*============== CSR Vector functions ===================*/
 
 // Initialization function, sets all the variables and arrays from the structure
@@ -191,7 +220,6 @@ double csr_vector_get(csr_vector *vector, int index){
 }
 
 // Sets a value at a given index of a CSR vector
-// TODO : do it efficiently !
 int csr_vector_set(csr_vector *vector, double value, int index){
 	if (index >= vector->nrows){
 			printf("!!! Index out of bounds.\n");
@@ -331,6 +359,24 @@ void nat_vector_init(nat_vector *vector, int nrows){
 	vector->values = malloc(nrows*sizeof(double));
 }
 
+// Scales a natural vector
+void nat_vector_scale(nat_vector *vector, double scaling_factor){
+	for (int i = 0; i < vector->nrows; ++i){
+		vector->values[i] *= scaling_factor;
+	}
+}
+
+// Sums two natural vectors and stores the result in a third vector
+int nat_vector_add(nat_vector *P, nat_vector *Q, nat_vector *R){
+	if (P->nrows != Q->nrows || P->nrows != R->nrows){
+		printf("!!! Vector dimensions mismatch.\n");
+		return -1;
+	}
+	for (int i = 0; i < P->nrows; ++i){
+		R->values[i] = P->values[i] + Q->values[i];
+	}
+}
+
 // Does a scalar product between two natural vectors
 double nat_vector_scalar(nat_vector *P, nat_vector *Q){
 	if (P->nrows != Q->nrows){
@@ -346,27 +392,9 @@ double nat_vector_scalar(nat_vector *P, nat_vector *Q){
 	return result;
 }
 
-// Scales a natural vector
-void nat_vector_scale(nat_vector *vector, double scaling_factor){
-	for (int i = 0; i < vector->nrows; ++i){
-		vector->values[i] *= scaling_factor;
-	}
-}
-
 // Computes the Euclidian norm of a natural vector
 double nat_vector_norm(nat_vector *P){
 	return sqrt(nat_vector_scalar(P,P));
-}
-
-// Sums two natural vectors and stores the result in a third vector
-int nat_vector_add(nat_vector *P, nat_vector *Q, nat_vector *R){
-	if (P->nrows != Q->nrows || P->nrows != R->nrows){
-		printf("!!! Vector dimensions mismatch.\n");
-		return -1;
-	}
-	for (int i = 0; i < P->nrows; ++i){
-		R->values[i] = P->values[i] + Q->values[i];
-	}
 }
 
 // Copies the data from Q into P ( P = Q )
