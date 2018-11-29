@@ -13,8 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include <time.h>
+#include <stdbool.h>
 
 #include "CSR_BSR.h"
+#include "algorithms.h"
 #include "fileIO.h"
 
 #define initConcentration 1 //[g/m3]
