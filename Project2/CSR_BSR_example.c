@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "CSR_BSR.h"
+#include "COO_CSR_BSR.h"
 #include "algorithms.h"
 /*=====================================================================================
 * Provides examples for the use of the CSR/BSR library

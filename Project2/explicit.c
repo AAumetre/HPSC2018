@@ -16,7 +16,7 @@
 #include <time.h>
 #include <stdbool.h>
 
-#include "CSR_BSR.h"
+#include "COO_CSR_BSR.h"
 #include "algorithms.h"
 #include "fileIO.h"
 

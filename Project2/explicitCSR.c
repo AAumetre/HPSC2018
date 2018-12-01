@@ -14,7 +14,7 @@
 #include <string.h>
 #include <mpi.h>
 
-#include "CSR_BSR.h"
+#include "COO_CSR_BSR.h"
 #include "algorithms.h"
 #include "fileIO.h"
 

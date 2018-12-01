@@ -13,8 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include <time.h>
+#include <stdbool.h>
 
-#include "CSR_BSR.h"
+#include "COO_CSR_BSR.h"
+#include "algorithms.h"
 #include "fileIO.h"
 
 #define initConcentration 1 //[g/m3]
@@ -89,7 +92,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	for(size_t i=0; i<nodeX, i++)
+	for(size_t i=0; i<nodeX; i++)
 	{
 		for (size_t j = 0; j < nodeY; j++)
 		{
@@ -101,22 +104,22 @@ int main(int argc, char *argv[])
 				A[line*nodeX*nodeY*nodeZ + column]+= 1/parameters.m + 6*parameters.D/(parameters.h*parameters.h);
 				// i-1 j k
 				column = i-1 + nodeX*j + nodeX*nodeY*k;
-				A[line*nodeX*nodeY*nodeZ + column]-= parameters.vx/(2*h) + parameters.D/(parameters.h*parameters.h);
+				A[line*nodeX*nodeY*nodeZ + column]-= parameters.vx/(2*parameters.h) + parameters.D/(parameters.h*parameters.h);
 				// i+1 j k
 				column = i+1 + nodeX*j + nodeX*nodeY*k;
-				A[line*nodeX*nodeY*nodeZ + column]+= parameters.vx/(2*h) - parameters.D/(parameters.h*parameters.h);
+				A[line*nodeX*nodeY*nodeZ + column]+= parameters.vx/(2*parameters.h) - parameters.D/(parameters.h*parameters.h);
 				// i j-1 k
 				column = i + nodeX*(j-1) + nodeX*nodeY*k;
-				A[line*nodeX*nodeY*nodeZ + column]-= parameters.vy/(2*h) + parameters.D/(parameters.h*parameters.h);
+				A[line*nodeX*nodeY*nodeZ + column]-= parameters.vy/(2*parameters.h) + parameters.D/(parameters.h*parameters.h);
 				// i j+1 k
 				column = i + nodeX*(j+1) + nodeX*nodeY*k;
-				A[line*nodeX*nodeY*nodeZ + column]+= parameters.vy/(2*h) - parameters.D/(parameters.h*parameters.h);
+				A[line*nodeX*nodeY*nodeZ + column]+= parameters.vy/(2*parameters.h) - parameters.D/(parameters.h*parameters.h);
 				// i j k-1
 				column = i + nodeX*j + nodeX*nodeY*(k-1);
-				A[line*nodeX*nodeY*nodeZ + column]-= parameters.vz/(2*h) + parameters.D/(parameters.h*parameters.h);
+				A[line*nodeX*nodeY*nodeZ + column]-= parameters.vz/(2*parameters.h) + parameters.D/(parameters.h*parameters.h);
 				// i j k+1
 				column = i + nodeX*j + nodeX*nodeY*(k+1);
-				A[line*nodeX*nodeY*nodeZ + column]+= parameters.vz/(2*h) - parameters.D/(parameters.h*parameters.h);
+				A[line*nodeX*nodeY*nodeZ + column]+= parameters.vz/(2*parameters.h) - parameters.D/(parameters.h*parameters.h);
 
 			}
 		}
