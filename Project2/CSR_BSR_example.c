@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #include "COO_CSR_BSR.h"
 #include "algorithms.h"
@@ -244,6 +245,68 @@ int main(int argc, char **argv){
 	//nat_vector_free(&nat1);
 	nat_vector_free(&nat2);
 	coo_matrix_free(&coo1);
+
+	//Performance test for the COO/natural product.
+	printf("\nPerformance test for the COO/natural product.\n");
+	nat_vector nat3;
+	nat_vector_init(&nat3, 12);
+	nat_vector res3;
+	nat_vector_init(&res3, 12);
+
+	for (int i=0; i < 12; ++i){
+		nat3.values[i] = i;
+	}
+	coo_matrix coo_mat;
+	coo_matrix_init_empty(&coo_mat, 12, 12);
+	double natural8[] = {1.0, 2.0, 3.0,   0.0, 0.0, 0.0,   1.0, 2.0, 3.0,   1.0, 0.0, 0.0,
+
+						 1.0, 0.0, 1.0,   0.0, 3.0, 0.0,   1.0, 2.0, 3.0,   0.0, 6.0, 0.0,
+
+						 1.0, 3.0, 2.0,   0.0, 0.0, 0.0,   6.0, 7.0, 3.0,   0.0, 0.0, 1.0,
+
+						 0.0, 0.0, 0.0,   6.0, 1.0, 4.0,   1.0, 2.0, 3.0,   0.0, 0.5, 1.0,
+
+						 0.0, 1.0, 0.0,   1.0, 1.0, 2.0,   0.0, 2.0, 3.0,   0.0, 1.0, 2.0,
+
+					   	 0.0, 0.0, 0.0,   6.0, 1.0, 2.0,   1.0, 5.0, 3.0,   2.0, 0.0, 0.0,
+
+					   	 1.0, 2.0, 3.0,   0.0, 0.0, 0.0,   2.0, 2.0, 3.0,   0.0, 0.8, 1.4,
+
+						 1.0, 0.0, 1.0,   0.0, 1.0, 5.0,   1.0, 2.0, 3.0,   8.0, 4.0, 0.0,
+
+						 1.0, 0.0, 2.0,   0.0, 0.0, 0.0,   1.0, 4.0, 3.0,   0.0, 0.0, 1.0,
+
+						 0.0, 1.0, 0.0,   6.0, 0.0, 2.0,   1.0, 7.0, 3.0,   1.0, 0.1, 0.4,
+
+						 0.0, 0.0, 0.0,   1.0, 1.0, 2.0,   1.0, 2.0, 3.0,   0.0, 4.0, 0.0,
+
+					   	 0.0, 0.0, 0.0,   6.0, 1.0, 2.0,   1.0, 2.0, 3.0,   0.0, 0.0, 0.0};
+	convert_natural_to_coo(natural8, &coo_mat, 12*12);
+	coo_matrix_scale(&coo_mat, 5e-4);
+
+	for (int i = 0; i < 12; ++i){
+		for (int j = 0; j < 12; ++j){
+			printf("%.5f ", coo_matrix_get(&coo_mat, i, j));
+		}
+		printf("\n");
+	}
+
+	clock_t begin = clock();
+	clock_t end = clock();
+	double time_spent;
+	// Apply the matrix n times to the vector
+	for (int i = 0; i < 1000; ++i){
+		coo_matrix_nat_vector(&coo_mat, &nat3, &res3);
+		nat_vector_equals(&nat3, &res3);
+	}
+	for (int i=0; i < 12; ++i){
+		printf("%f\n", res3.values[i]);
+	}
+
+
+	end = clock();
+	time_spent = (double)(end - begin) / (CLOCKS_PER_SEC);
+	printf("\nJob done in %2.4lf s.\n", time_spent);
 	
 	return(0);
 }

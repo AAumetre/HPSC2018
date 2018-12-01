@@ -115,6 +115,9 @@ void csr_vector_resize(csr_vector *vector, int new_nnzb);
 // Copies the data from Q into P ( P = Q )
 void csr_vector_equals(csr_vector *P, csr_vector *Q);
 
+// Scales a COO matrix
+void coo_matrix_scale(coo_matrix *matrix, double scale);
+
 // Frees the memory
 void csr_vector_free(csr_vector *vector);
 

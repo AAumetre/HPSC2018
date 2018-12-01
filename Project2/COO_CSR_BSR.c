@@ -16,7 +16,7 @@
 #include <string.h>
 
 #include "algorithms.h"
-#include "CSR_BSR.h"
+#include "COO_CSR_BSR.h"
 
 /*============== BSR Matrix functions ===================*/
 // Initialization function, sets all the variables and arrays from the structure
@@ -208,6 +208,13 @@ void coo_matrix_resize(coo_matrix *matrix, int new_nnzb){
 	}
 }
 
+// Scales a COO matrix
+void coo_matrix_scale(coo_matrix *matrix, double scale){
+	for (int i = 0; i < matrix->nnzb; ++i){
+		matrix->values[i] *= scale;
+	}
+}
+
 // Frees the memory, fly away !
 void coo_matrix_free(coo_matrix *matrix){
 	free(matrix->rows);
@@ -395,7 +402,7 @@ void csr_vector_free(csr_vector *vector){
 // Initialization function
 void nat_vector_init(nat_vector *vector, int nrows){
 	vector->nrows = nrows;
-	vector->values = malloc(nrows*sizeof(double));
+	vector->values = calloc(nrows, sizeof(double));
 }
 
 // Scales a natural vector
@@ -423,8 +430,6 @@ double nat_vector_scalar(nat_vector *P, nat_vector *Q){
 		return -1;
 	}
 	double result = 0;
-
-	// Finding the intersection between the rows (non-zero values)
 	for (int i = 0; i < P->nrows; ++i){
 		result += P->values[i]*Q->values[i];
 	}
@@ -479,20 +484,13 @@ void bsr_matrix_csr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *c
 	free(result_vector);
 }
 
-// Does a BSR matrix/ CSR vector product
+// Does a COO matrix/ natural vector product
 void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *result){
 	if (vector->nrows != matrix->ncolumns){
 		printf("!!! Matrix and vector dimensions mismatch.\n");
 		exit(1);
 	}
-	nat_vector row_vector;
-	nat_vector_init(&row_vector, matrix->ncolumns);
-	for (int i = 0; i < matrix->nrows; ++i){
-		// Get a row vector
-		for (int j = 0; j < matrix->ncolumns; ++j){
-			row_vector.values[j] = coo_matrix_get(matrix, i, j);
-		}
-		result->values[i] = nat_vector_scalar(&row_vector, vector);
+	for (int i = 0; i < matrix->nnzb; ++i){
+		result->values[matrix->rows[i]] += matrix->values[i]*vector->values[matrix->columns[i]];
 	}
-	nat_vector_free(&row_vector);
 }
