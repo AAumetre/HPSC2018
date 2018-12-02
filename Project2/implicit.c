@@ -323,16 +323,16 @@ int main(int argc, char *argv[])
 			// Use of the MPI file IO functions
 			int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
 			MPI_File output_file;
-			char file_name[20];
+			char file_name[30];
 			sprintf(file_name, "results/c_%ld.dat",iteration);
 			unsigned int N[] = {nodeX};
 
 			MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
 			if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
-			MPI_Offset disp;
-			disp = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
+			MPI_Offset displacement;
+			displacement = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
 			// Set the view the current node has
-			MPI_File_seek(output_file, disp, MPI_SEEK_SET);
+			MPI_File_seek(output_file, displacement, MPI_SEEK_SET);
 			MPI_File_write(output_file, concentration, nodeX*nodeY*thicknessMPI, MPI_DOUBLE, MPI_STATUS_IGNORE);
 			MPI_File_close(&output_file);
 		}
