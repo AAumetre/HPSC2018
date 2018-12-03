@@ -133,7 +133,8 @@ int main(int argc, char *argv[])
 	#	Main loop
 	================================================================================================*/
 	if (rank == 0) printf("Iteration: ");
-	while (iteration <= stopTime && !stopFlag){
+	while (iteration <= stopTime && !stopFlag)
+	{
 		if (rank == 0) printf("%ld ", iteration);
 		// Search for boundaries
 		size_t isXbound = 0;
@@ -181,12 +182,15 @@ int main(int argc, char *argv[])
 		}
 
 		// Send your status to all the other nodes
-		for (int i = 0; i < world_size; ++i){
+		for (int i = 0; i < world_size; ++i)
+		{
 			if(valueOnBoundary)stopFlags[i] = 1;
 		}
 		MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, SUB_COMM);
-		for (int i = 0; i < world_size; ++i){
-			if(stopFlagsFromOthers[i] == 1){
+		for (int i = 0; i < world_size; ++i)
+		{
+			if(stopFlagsFromOthers[i] == 1)
+			{
 			stopFlag = true;
 			break;
 			}

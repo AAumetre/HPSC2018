@@ -119,7 +119,9 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t nodeZ, d
     double Ddivh2 = D/(h*h);
     if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || k==0 || k==nodeZ-1))
     {
+      //Apresult[i+j*nodeX+k*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
       Apresult[i+j*nodeX+k*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
+      Apresult[i+j*nodeX+k*nodeX*nodeY] *= m;
     }
   }
 }
@@ -143,7 +145,9 @@ int main(int argc, char *argv[])
 	Param parameters = readDat(argv[1]);
 	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	size_t stopTime = 2;//parameters.Tmax/parameters.m;
+	size_t stopTime = parameters.Tmax/parameters.m;
+
+  printf("threshold: %f\n", parameters.rthreshold);
 
   double *concentration = calloc(nodeX*nodeY*nodeZ, sizeof(double));
 
@@ -184,10 +188,26 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
+    printf("concentration \n");
+    for(size_t i=0; i<nodeX*nodeY*nodeZ; i++)
+    {
+      //if(concentration[i] != 0)
+        //printf("%zu %lf ,\n", i, concentration[i]);
+    }
+    printf("\n");
+
     for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*nodeZ; copyIndex++)
     {
         r[copyIndex] = concentration[copyIndex];
     }
+
+    printf("r \n");
+    for(size_t i=0; i<nodeX*nodeY*nodeZ; i++)
+    {
+      //if(r[i] != 0)
+        //printf("%zu %lf ,", i, concentration[i]);
+    }
+    printf("\n");
 
     // p0 = r0
     double *p = calloc(nodeX*nodeY*nodeZ, sizeof(double));
@@ -202,8 +222,10 @@ int main(int argc, char *argv[])
         p[copyIndex] = r[copyIndex];
     }
 
-    while(sqrt(SquaredNorm(r, nodeX*nodeY*nodeZ))>parameters.rthreshold)
+    printf("%g", sqrt(SquaredNorm(r, nodeX*nodeY*nodeZ)));
+    while(sqrt(SquaredNorm(r, nodeX*nodeY*nodeZ))>=1e-10)
     {
+      printf("Enter the while\n");
       // alpha = r^T*r / p^T*A*p
       double *Apvect = calloc(nodeX*nodeY*nodeZ, sizeof(double));
 
@@ -229,8 +251,8 @@ int main(int argc, char *argv[])
 
       for(size_t i=0; i<nodeX*nodeY*nodeZ; i++)
       {
-        if(concentrationSuiv[i] > 1e-12)
-          printf("%zu %lf ,", i, concentrationSuiv[i]);
+        //if(concentrationSuiv[i] > 1e-12)
+          //printf("%zu %lf ,", i, concentrationSuiv[i]);
       }
       printf("\n\n");
       free(Apvect);
@@ -241,9 +263,11 @@ int main(int argc, char *argv[])
       int k = floor(index/(nodeX*nodeY));
       int j = floor((index-k*nodeX*nodeY)/nodeX);
       int i = index - k * nodeX * nodeY - j * nodeX;
-      if(!(i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || k<=1 || k<=nodeZ-2) && concentrationSuiv[index]> 1e-12)
+      if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || k<=1 || k<=nodeZ-2) && concentrationSuiv[index]> 1e-8)
       {
+          printf("%16g\n", concentrationSuiv[index]);
           printf("STOP\n");
+          iteration = stopTime+2;
           break;
       }
     }
@@ -256,8 +280,8 @@ int main(int argc, char *argv[])
     printf("Iteration %zu \n", iteration);
     for(size_t i=0; i<nodeX*nodeY*nodeZ; i++)
     {
-      if(concentrationSuiv[i] > 1e-12)
-        printf("%zu %lf ,", i, concentrationSuiv[i]);
+      //if(concentrationSuiv[i] > 1e-12)
+        //printf("%zu %lf ,", i, concentrationSuiv[i]);
     }
     printf("\n");
 
