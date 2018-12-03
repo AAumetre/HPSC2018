@@ -198,7 +198,8 @@ int main(int argc, char *argv[])
 
 		// ============================== Send and receive neighboring values
 		int *commList = getCommListSlices(world_size);
-		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2) {
+		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2)
+		{
 			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
 			//printf("S#%d R%d\n", commList[commIndex], commList[commIndex+1]);
 			bool isSender = false;

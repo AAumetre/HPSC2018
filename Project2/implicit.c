@@ -2,6 +2,10 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mpi.h>
+#include <stdbool.h>
+#include "algorithms.h"
+#include "fileIO.h"
 
 #define initConcentration 1 //[g/m3]
 
@@ -109,17 +113,19 @@ void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, 
 * -----------------------------------------------------------------------------*
 *
 * ----------------------------------------------------------------------------*/
-void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t nodeZ, double h, double m, double vx, double vy, double vz, double D)
+void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknessMPI, double h, double m, double vx, double vy, double vz, double D, int rank, int world_size)
 {
-  for(size_t index = 0; index< nodeX*nodeY*nodeZ; index++)
+  for(size_t index = nodeX*nodeY; index< nodeX*nodeY*(thicknessMPI-1); index++)
   {
+    bool onZBoundary = false;
     int k = floor(index/(nodeX*nodeY));
     int j = floor((index-k*nodeX*nodeY)/nodeX);
     int i = index - k * nodeX * nodeY - j * nodeX;
     double Ddivh2 = D/(h*h);
-    if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || k==0 || k==nodeZ-1))
+    if (rank == 0) onZBoundary = (index<nodeX*nodeY);
+    if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
+    if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
     {
-      //Apresult[i+j*nodeX+k*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
       Apresult[i+j*nodeX+k*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
       Apresult[i+j*nodeX+k*nodeX*nodeY] *= m;
     }
@@ -278,7 +284,73 @@ int main(int argc, char *argv[])
         puts("Mem ERR0R Apvect!");
         exit(1);
       }
-      Ap(p, Apvect, nodeX, nodeY, thicknessMPI, parameters.h, parameters.m, parameters.vx, parameters.vy, parameters.vz, parameters.D);
+      //Get neighbours
+      double *p2 = calloc(nodeX*nodeY*(thicknessMPI+2), sizeof(double));
+      if (p2 == NULL)
+      {
+        puts("Mem ERR0R p!");
+        exit(1);
+      }
+      // ============================== Send and receive neighboring values
+  		int *commList = getCommListSlices(world_size);
+  		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2)
+  		{
+  			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
+  			//printf("S#%d R%d\n", commList[commIndex], commList[commIndex+1]);
+  			bool isSender = false;
+  			bool isReceiver = false;
+  			if (rank == commList[commIndex]) isSender = true;
+  			if (rank == commList[commIndex+1]) isReceiver = true;
+  			int klocal = 0;
+  			int i = 0;
+  			int j = 0;
+  			if (isSender)
+  			{
+  				if (commList[commIndex] > commList[commIndex+1])
+  					{ // If sender ID is greater than receiver ID
+  						// Send the upper boundary values
+  						klocal = 0;
+  						for (size_t index = 0; index < nodeX*nodeY; index ++){
+  							j = floor(index/nodeX);
+  							i = index - j*nodeX;
+  							MPI_Send(&p[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+  						}
+  					}
+  					else
+  					{
+  						// Send the lower boundary values
+  						klocal = thicknessMPI-1;
+  						for (size_t index = 0; index < nodeX*nodeY; index ++){
+  							j = floor(index/nodeX);
+  							i = index - j*nodeX;
+  							MPI_Send(&p[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+  						}
+  					}
+  			}
+  			else if (isReceiver){
+  				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
+  					// Get the upper boundary values
+  					klocal = thicknessMPI+1;
+  					for (size_t index = 0; index < nodeX*nodeY; index ++){
+  							j = floor(index/nodeX);
+  							i = index - j*nodeX;
+  						MPI_Recv(&p2[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
+  					}
+  				}
+  				else
+  				{
+  					// Get the lower boundary values
+  					klocal = 0;
+  					for (size_t index = 0; index < nodeX*nodeY; index ++){
+  							j = floor(index/nodeX);
+  							i = index - j*nodeX;
+  						MPI_Recv(&p2[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
+  					}
+  				}
+  			}
+  		}
+
+      Ap(p2, Apvect, nodeX, nodeY, thicknessMPI, parameters.h, parameters.m, parameters.vx, parameters.vy, parameters.vz, parameters.D, rank, world_size);
       double alpha = SquaredNorm(r, nodeX*nodeY*thicknessMPI) / VectorProduct(p, Apvect, nodeX*nodeY*thicknessMPI);
       // xi+1 = xi + alpha*p
       SumVect(concentrationSuiv, concentrationSuiv, p, alpha, nodeX*nodeY*thicknessMPI);
@@ -293,14 +365,18 @@ int main(int argc, char *argv[])
           r[copyIndex] = rsuiv[copyIndex];
       }
       free(Apvect);
+      free(p2);
     }
 
     for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
     {
+      bool onZBoundary = false;
       int k = floor(index/(nodeX*nodeY));
       int j = floor((index-k*nodeX*nodeY)/nodeX);
       int i = index - k * nodeX * nodeY - j * nodeX;
-      if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || k<=1 || k<=nodeZ-2) && concentrationSuiv[index]> 100*parameters.rthreshold)
+      if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
+      if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
+      if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 100*parameters.rthreshold)
       {
           printf("STOP\n");
           valueOnBoundary = true;
@@ -328,12 +404,12 @@ int main(int argc, char *argv[])
         concentration[copyIndex] = concentrationSuiv[copyIndex];
     }
 
-    for(size_t i=0; i<nodeX*nodeY*thicknessMPI; i++)
+    /*for(size_t i=0; i<nodeX*nodeY*thicknessMPI; i++)
     {
       if(concentrationSuiv[i] > 1e-12)
         printf("%zu %lf ,", i, concentrationSuiv[i]);
     }
-    printf("\n");
+    printf("\n");*/
 
     free(concentrationSuiv);
     free(p);
