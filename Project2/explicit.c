@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 			else if (isReceiver){
 				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 					// Get the upper boundary values
-					klocal = thicknessMPI-1;
+					klocal = thicknessMPI+1;
 					for (size_t index = 0; index < nodeX*nodeY; index ++){
 							j = floor(index/nodeX);
 							i = index - j*nodeX;

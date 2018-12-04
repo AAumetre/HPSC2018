@@ -10,56 +10,6 @@
 #define initConcentration 1 //[g/m3]
 
 /* ----------------------------------------------------------------------------*
-* Structure: Param
-* -----------------------------------------------------------------------------*
-* @ param:  h             double          spatial step [m]
-*           m             double          time step [s]
-*           L             double          space domain size [m]
-*           Tmax          double          time domain size [s]
-*           vx            double          horizontal velocity [m/s]
-*           vy            double          vertical velocity [m/s]
-*           vz            double          z-axis velocity [m/s]
-*           D             double          diffusion coefficient [m^2/s]
-*           S             unsigned int
-*           rthreshold    double
-* -----------------------------------------------------------------------------*
-* Structure the parameters defining the domain
-* ----------------------------------------------------------------------------*/
-typedef struct Param{
-  double h,m, L, Tmax, vx, vy, vz, D, rthreshold;
-  unsigned int S;
-} Param;
-
-/* ----------------------------------------------------------------------------*
-* function: readDat
-* -----------------------------------------------------------------------------*
-* @ param:  filename   char*            pointer on the dat file path to open
-* @ return: Param      parameters       structure containing the parameters
-* -----------------------------------------------------------------------------*
-* Function reading a given dat file and returning a structure containing its
-* data
-* ----------------------------------------------------------------------------*/
-Param readDat(char *filename){
-	FILE *file = fopen(filename, "r");
-	Param parameters;
-
-	if (file != NULL)
-	{
-		fscanf(file, "%lf %lf %lf %lf %lf %lf %lf %lf %u %lf", &parameters.h, &parameters.m, &parameters.L, &parameters.Tmax, &parameters.vx, &parameters.vy, &parameters.vz, &parameters.D, &parameters.S, &parameters.rthreshold);
-		//printf("The parameters are : h %lf  m %lf  L %lf Tmax %lf %lf %lf %lf %lf %u %lf", parameters.h, parameters.m, parameters.L, parameters.Tmax, parameters.vx, parameters.vy, parameters.vz, parameters.D, parameters.S, parameters.rthreshold);
-
-		fclose(file);
-	}
-	else
-	{
-		puts("File ERR0R !");
-		exit(1);
-	}
-
-	return parameters;
-}
-
-/* ----------------------------------------------------------------------------*
 * function: SquaredNorm
 * -----------------------------------------------------------------------------*
 * @ param:
@@ -126,8 +76,8 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknes
     if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
     if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
     {
-      Apresult[i+j*nodeX+k*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
-      Apresult[i+j*nodeX+k*nodeX*nodeY] *= m;
+      Apresult[i+j*nodeX+(k-1)*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
+      Apresult[i+j*nodeX+(k-1)*nodeX*nodeY] *= m;
     }
   }
 }
@@ -141,7 +91,7 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknes
 * ----------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
-	if (argc != 2) {
+	if (argc != 3) {
 		printf("Wrong arguments\n");
 		printf("Please use the function with ./exe param.dat\n");
 		return 1;
@@ -291,6 +241,15 @@ int main(int argc, char *argv[])
         puts("Mem ERR0R p!");
         exit(1);
       }
+
+      for (size_t copyIndex = nodeX*nodeY; copyIndex< nodeX*nodeY*(thicknessMPI-1); copyIndex++)
+      {
+        int k = floor(copyIndex/(nodeX*nodeY));
+        int j = floor((copyIndex-k*nodeX*nodeY)/nodeX);
+        int i = copyIndex - k * nodeX * nodeY - j * nodeX;
+        p2[copyIndex] = p[i+j*nodeX+(k-1)*nodeX*nodeY];
+      }
+
       // ============================== Send and receive neighboring values
   		int *commList = getCommListSlices(world_size);
   		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2)
