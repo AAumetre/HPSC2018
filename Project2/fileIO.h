@@ -20,6 +20,7 @@ typedef struct Param{
 } Param;
 
 Param readDat(char *filename);
+void writeSequentialFile(double values[], int iteration, int N);
 /* ----------------------------------------------------------------------------*
 * function: readDat
 * -----------------------------------------------------------------------------*
@@ -49,3 +50,15 @@ Param readDat(char *filename){
 	return parameters;
 }
 
+void writeSequentialFile(double values[], int iteration, int N){
+	char file_name[20];
+	sprintf(file_name, "results/c_%ld.dat",iteration);
+
+	FILE *pNewFile = fopen(file_name, "wb");
+	//Writing the header
+	int header[] = {N};
+	fwrite(header, sizeof(int), 1, pNewFile);
+
+	fwrite(values, sizeof(double), N, pNewFile);
+	fclose(pNewFile);
+}
