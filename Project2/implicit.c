@@ -78,7 +78,7 @@ void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, 
 * ----------------------------------------------------------------------------*/
 void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknessMPI, double h, double m, double vx, double vy, double vz, double D, int rank, int world_size)
 {
-  for(size_t index = nodeX*nodeY; index< nodeX*nodeY*(thicknessMPI-1); index++)
+  for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
   {
     bool onZBoundary = false;
     int k = floor(index/(nodeX*nodeY));
@@ -89,8 +89,9 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknes
     if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
     if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
     {
-      Apresult[i+j*nodeX+(k-1)*nodeX*nodeY] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
-      Apresult[i+j*nodeX+(k-1)*nodeX*nodeY] *= m;
+      k+=1;
+      Apresult[index] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
+      Apresult[index] *= m;
     }
   }
 }
@@ -196,7 +197,8 @@ int implicit_solver(int argc, char *argv[])
 
   size_t iteration = 0;
   while (iteration <= stopTime && !stopFlag)
-  {
+  { if (rank == 0) printf("Enter the while iteration %zu\n", iteration);
+    if (rank == 1) printf("Enter the while iteration %zu rank 1\n", iteration);
     //--------------------------------------------------------------------------
     //              Conjugate Gradient Method
     //--------------------------------------------------------------------------
@@ -213,9 +215,12 @@ int implicit_solver(int argc, char *argv[])
       exit(1);
     }
 
+    //printf("R\n");
     for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
     {
         r[copyIndex] = concentration[copyIndex];
+        //if(r[copyIndex]>1e-12)
+          //printf("%zu %f, \n", copyIndex, r[copyIndex]);
     }
 
     // p0 = r0
@@ -226,13 +231,21 @@ int implicit_solver(int argc, char *argv[])
       puts("Mem ERR0R p!");
       exit(1);
     }
+
+    //printf("P\n");
     for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
     {
         p[copyIndex] = r[copyIndex];
+        //if(p[copyIndex]>1e-12)
+          //printf("%zu %f, \n", copyIndex, p[copyIndex]);
     }
 
-    while(sqrt(SquaredNorm(r, nodeX*nodeY*thicknessMPI))>=parameters.rthreshold)
+    double local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
+    double global_sum;
+    MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+    while(sqrt(global_sum)>=parameters.rthreshold)
     {
+      //printf("Norm : %f\n", sqrt(global_sum));
       // alpha = r^T*r / p^T*A*p
       double *Apvect = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
@@ -249,12 +262,12 @@ int implicit_solver(int argc, char *argv[])
         exit(1);
       }
 
-      for (size_t copyIndex = nodeX*nodeY; copyIndex< nodeX*nodeY*(thicknessMPI-1); copyIndex++)
+      //printf("P2\n");
+      for (size_t copyIndex = 0; copyIndex< nodeX*nodeY*thicknessMPI; copyIndex++)
       {
-        int k = floor(copyIndex/(nodeX*nodeY));
-        int j = floor((copyIndex-k*nodeX*nodeY)/nodeX);
-        int i = copyIndex - k * nodeX * nodeY - j * nodeX;
-        p2[copyIndex] = p[i+j*nodeX+(k-1)*nodeX*nodeY];
+        p2[copyIndex+nodeX*nodeY] = p[copyIndex];
+        //if(p2[copyIndex+nodeX*nodeY] > 1e-12)
+          //printf("%zu %lf ,\n", copyIndex+nodeX*nodeY, p2[copyIndex+nodeX*nodeY]);
       }
 
       // ============================== Send and receive neighboring values
@@ -315,23 +328,48 @@ int implicit_solver(int argc, char *argv[])
   				}
   			}
   		}
-
       Ap(p2, Apvect, nodeX, nodeY, thicknessMPI, parameters.h, parameters.m, parameters.vx, parameters.vy, parameters.vz, parameters.D, rank, world_size);
-      double alpha = SquaredNorm(r, nodeX*nodeY*thicknessMPI) / VectorProduct(p, Apvect, nodeX*nodeY*thicknessMPI);
+      double rtr = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
+      double global_rtr;
+      MPI_Allreduce(&rtr, &global_rtr, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+      double ptAp = VectorProduct(p, Apvect, nodeX*nodeY*thicknessMPI);
+      double global_ptAp;
+      MPI_Allreduce(&ptAp, &global_ptAp, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+      double alpha = global_rtr / global_ptAp;
+
       // xi+1 = xi + alpha*p
       SumVect(concentrationSuiv, concentrationSuiv, p, alpha, nodeX*nodeY*thicknessMPI);
+
       // ri+1 = ri - alpha*Ap
       SumVect(rsuiv, r, Apvect, -alpha, nodeX*nodeY*thicknessMPI);
+
       // beta = ri+1^T*ri+1 / ri^T*ri
-      double beta = SquaredNorm(rsuiv, nodeX*nodeY*thicknessMPI)/SquaredNorm(r,  nodeX*nodeY*thicknessMPI);
+      double rSuitrSui = SquaredNorm(rsuiv, nodeX*nodeY*thicknessMPI);
+      double global_rSuitrSui;
+      MPI_Allreduce(&rSuitrSui, &global_rSuitrSui, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+      double beta = global_rSuitrSui / global_rtr;
+
       // pi+1 = ri+1 + beta*p
       SumVect(p, rsuiv, p, beta, nodeX*nodeY*thicknessMPI);
       for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
       {
           r[copyIndex] = rsuiv[copyIndex];
       }
+      local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
+      MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+
       free(Apvect);
       free(p2);
+
+      /*if(rank==1)
+      {
+        for(size_t i=0; i<nodeX*nodeY*thicknessMPI; i++)
+        {
+          if(concentrationSuiv[i] > 1e-12)
+            printf("%zu %lf ,\n", i, concentrationSuiv[i]);
+        }
+      }*/
+
     }
 
     for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
@@ -342,7 +380,7 @@ int implicit_solver(int argc, char *argv[])
       int i = index - k * nodeX * nodeY - j * nodeX;
       if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
       if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
-      if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 100*parameters.rthreshold)
+      if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 5e-8)
       {
           printf("STOP\n");
           valueOnBoundary = true;
@@ -377,6 +415,27 @@ int implicit_solver(int argc, char *argv[])
     }
     printf("\n");*/
 
+    // Check if files should be saved
+    if (iteration%parameters.S == 0)
+    {
+      // ============================== Writing the output file
+      // Use of the MPI file IO functions
+      int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
+      MPI_File output_file;
+      char file_name[30];
+      sprintf(file_name, "results/c_%ld.dat",iteration);
+      unsigned int N[] = {nodeX};
+
+      MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+      if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
+      MPI_Offset displacement;
+      displacement = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
+      // Set the view the current node has
+      MPI_File_seek(output_file, displacement, MPI_SEEK_SET);
+      MPI_File_write(output_file, concentration, nodeX*nodeY*thicknessMPI, MPI_DOUBLE, MPI_STATUS_IGNORE);
+      MPI_File_close(&output_file);
+    }
+
     free(concentrationSuiv);
     free(p);
     free(r);
@@ -384,5 +443,6 @@ int implicit_solver(int argc, char *argv[])
 
     iteration+=1;
   }
-
+  MPI_Finalize();
+	return 0;
 }
