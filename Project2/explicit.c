@@ -214,6 +214,7 @@ int explicit_solver(int argc, char *argv[])
 							i = index - j*nodeX;
 							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 						}
+						//MPI_Send(&concentration[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 					}
 					else
 					{
@@ -235,6 +236,7 @@ int explicit_solver(int argc, char *argv[])
 							i = index - j*nodeX;
 						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 					}
+					//MPI_Recv(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 				}
 				else
 				{

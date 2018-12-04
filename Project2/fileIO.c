@@ -11,13 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mpi.h>
-#include <stdbool.h>
-#include <time.h>
-#include <math.h>
 
-#include "COO_CSR_BSR.h"
-#include "algorithms.h"
 #include "fileIO.h"
 
 Param readDat(char *filename){
@@ -49,6 +43,6 @@ void writeSequentialFile(double values[], int iteration, int N){
 	int header[] = {N};
 	fwrite(header, sizeof(int), 1, pNewFile);
 
-	fwrite(values, sizeof(double), N, pNewFile);
+	fwrite(values, sizeof(double), N*N*N, pNewFile);
 	fclose(pNewFile);
 }
