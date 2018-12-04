@@ -1,9 +1,22 @@
+/*=======================================================================================
+* This code was written by:                                                          *
+*               Antonin Aumètre - antonin.aumetre@gmail.com            *
+*               Céline Moureau -  cemoureau@gmail.com                *
+* For: High Performance Scientific course at ULiège, 2018-19                         *
+* Project 2                                                                          *
+*                                                            *
+* Originally uploaded to: https://github.com/Cobalt1911                              *
+* Under GNU General Public License 11/2018                                           *
+=======================================================================================*/
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
 #include <stdbool.h>
+#include <time.h>
+#include <math.h>
+
+#include "COO_CSR_BSR.h"
 #include "algorithms.h"
 #include "fileIO.h"
 
@@ -90,14 +103,8 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknes
 * -----------------------------------------------------------------------------*
 *
 * ----------------------------------------------------------------------------*/
-int main(int argc, char *argv[])
+int implicit_solver(int argc, char *argv[])
 {
-	if (argc != 3) {
-		printf("Wrong arguments\n");
-		printf("Please use the function with ./exe param.dat\n");
-		return 1;
-	}
-
   // Initalizes MPI
 	MPI_Init(NULL, NULL);
 	int rank;

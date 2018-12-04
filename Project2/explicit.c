@@ -9,28 +9,22 @@
 *	Under GNU General Public License 11/2018                                           *
 =======================================================================================*/
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
-#include <time.h>
 #include <stdbool.h>
+#include <time.h>
+#include <math.h>
 
 #include "COO_CSR_BSR.h"
 #include "algorithms.h"
 #include "fileIO.h"
 
+
 #define initConcentration 1 //[g/m3]
 
-
-int main(int argc, char *argv[])
+int explicit_solver(int argc, char *argv[])
 {
-	if (argc != 3) {
-		printf("Wrong arguments\n");
-		printf("Please use the function with ./exe param.dat\n");
-		return 1;
-	}
-
 	// Initalizes MPI
 	MPI_Init(NULL, NULL);
 	int rank;
