@@ -140,15 +140,12 @@ int explicit_solver(int argc, char *argv[])
 		// ============================== Compute internal values
 		for(index=0; index<stopIndex; index++)
 		{
-			int stage = floor(index/(nodeX*nodeY));
-			int inStage0 = index-stage*nodeX*nodeY;
+			int k = floor(index/(nodeX*nodeY));
+			int j = floor((index-k*nodeX*nodeY)/nodeX);
+			int i = index - k * nodeX * nodeY - j * nodeX;
 
-			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX))
-			{//I am in the domain
-				int k = floor(index/(nodeX*nodeY));
-				int j = floor((index-k*nodeX*nodeY)/nodeX);
-				int i = index - k * nodeX * nodeY - j * nodeX;
-
+			if (!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1))
+			{	//I am in the domain
 				int kbis = k+1;
 				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
 				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
@@ -166,13 +163,11 @@ int explicit_solver(int argc, char *argv[])
 				// Check the stopping conditions on the boundaries of the domain
 				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
 				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
-				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
-				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 1e-12)){
+				onBoundary = (i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2);
+				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 5e-8)){
 				  valueOnBoundary=true;
 				}
 			}
-			isXbound++;
-			if(isXbound==nodeX) isXbound = 0;
 		}
 
 		// Send your status to all the other nodes
