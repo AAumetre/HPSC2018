@@ -260,7 +260,7 @@ int explicit_solver(int argc, char *argv[])
 			int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
 			MPI_File output_file;
 			char file_name[30];
-			sprintf(file_name, "results/c_%ld.dat",iteration);
+			sprintf(file_name, "resultsExplicit/c_%ld.dat",iteration);
 			unsigned int N[] = {nodeX};
 
 			MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);

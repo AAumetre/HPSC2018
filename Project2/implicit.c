@@ -361,7 +361,7 @@ int implicit_solver(int argc, char *argv[])
       if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
       if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 5e-8)
       {
-          printf("conventration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
+          printf("concentration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
           printf("STOP\n");
           valueOnBoundary = true;
           break;
@@ -396,7 +396,7 @@ int implicit_solver(int argc, char *argv[])
       int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
       MPI_File output_file;
       char file_name[30];
-      sprintf(file_name, "results/c_%ld.dat",iteration);
+      sprintf(file_name, "resultsImplicit/c_%ld.dat",iteration);
       unsigned int N[] = {nodeX};
 
       MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
