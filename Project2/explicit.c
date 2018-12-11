@@ -126,6 +126,10 @@ int explicit_solver(int argc, char *argv[])
 	/*================================================================================================
 	#	Main loop
 	================================================================================================*/
+	int numthreads = 1;
+	#pragma omp parallel //Parallel region of the code
+	numthreads = __builtin_omp_get_num_threads();
+	printf("%d\n", numthreads);
 	if (rank == 0) printf("Iteration: ");
 	while (iteration <= stopTime && !stopFlag)
 	{
@@ -138,6 +142,7 @@ int explicit_solver(int argc, char *argv[])
 		//if (rank == world_size-1) stopIndex -= nodeY*nodeX;
 
 		// ============================== Compute internal values
+		#pragma omp for
 		for(size_t index=0; index<nodeX*nodeY*thicknessMPI; index++)
 		{
 			bool isOnZBoundary = false;
@@ -289,8 +294,8 @@ int explicit_solver(int argc, char *argv[])
 	if (!isIdle) MPI_Comm_free(&SUB_COMM);
 	if (rank == 0){
 		end = clock();
-		time_spent = (double)(end - begin) / (CLOCKS_PER_SEC);
-		printf("\nJob done in %2.4lf s, using %d nodes.\n", time_spent, world_size);
+		time_spent = (double)(end - begin) / (CLOCKS_PER_SEC*numthreads);
+		printf("\nJob done in %2.4lf s, using %d nodes and %d threads.\n", time_spent, world_size, numthreads);
 	}
 	MPI_Finalize();
 	return 0;
