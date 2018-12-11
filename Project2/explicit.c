@@ -32,11 +32,6 @@ int explicit_solver(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	//Check out the time
-	clock_t begin = clock();
-	clock_t end = clock();
-	double time_spent;
-
 	// Declare variables for the main loop
 	size_t iteration = 0;
 	bool onBoundary = false;
@@ -129,7 +124,6 @@ int explicit_solver(int argc, char *argv[])
 	int numthreads = 1;
 	#pragma omp parallel //Parallel region of the code
 	numthreads = __builtin_omp_get_num_threads();
-	printf("%d\n", numthreads);
 	if (rank == 0) printf("Iteration: ");
 	while (iteration <= stopTime && !stopFlag)
 	{
@@ -218,44 +212,26 @@ int explicit_solver(int argc, char *argv[])
 					{ // If sender ID is greater than receiver ID
 						// Send the upper boundary values
 						klocal = 0;
-						for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
-						}
-						//MPI_Send(&concentration[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+						MPI_Send(&concentration[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 					}
-					else
-					{
-						// Send the lower boundary values
-						klocal = thicknessMPI-1;
-						for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
-						}
-					}
+				else
+				{
+					// Send the lower boundary values
+					klocal = thicknessMPI-1;
+					MPI_Send(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+				}
 			}
 			else if (isReceiver){
 				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 					// Get the upper boundary values
 					klocal = thicknessMPI+1;
-					for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
-					}
-					//MPI_Recv(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
+					MPI_Recv(&c_[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 				}
 				else
 				{
 					// Get the lower boundary values
 					klocal = 0;
-					for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
-					}
+					MPI_Recv(&c_[klocal*nodeX*nodeY],  nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 				}
 			}
 		}
@@ -292,11 +268,8 @@ int explicit_solver(int argc, char *argv[])
 	MPI_Group_free(&world_group);
 	MPI_Group_free(&sub_world_group);
 	if (!isIdle) MPI_Comm_free(&SUB_COMM);
-	if (rank == 0){
-		end = clock();
-		time_spent = (double)(end - begin) / (CLOCKS_PER_SEC*numthreads);
-		printf("\nJob done in %2.4lf s, using %d nodes and %d threads.\n", time_spent, world_size, numthreads);
-	}
 	MPI_Finalize();
+
+	printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);
 	return 0;
 }

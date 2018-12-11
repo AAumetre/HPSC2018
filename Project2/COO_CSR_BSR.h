@@ -149,3 +149,16 @@ void bsr_matrix_csr_vector(bsr_matrix *matrix, csr_vector *vector, csr_vector *c
 
 // Does a BSR matrix/ CSR vector product
 void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *result);
+
+/*====================== Direct implementation ========================================================*/
+// Computes the square of the Euclidian norm of a natural vector
+double SquaredNorm(double* vect, size_t sizeVect);
+
+// Does a scalar product between two natural vectors
+double VectorProduct(double* vect1, double* vect2, size_t sizeVect);
+
+// Sums two natural vectors and stores the result in a third vector
+void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, size_t sizeVect);
+
+// Pre-computes the application of A to a vector p
+void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknessMPI, double h, double m, double vx, double vy, double vz, double D, int rank, int world_size);
