@@ -179,7 +179,8 @@ int implicit_solver(int argc, char *argv[])
 
   double *concentration = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
-  if (concentration == NULL) {
+  if (concentration == NULL)
+  {
     puts("Mem ERR0R !");
     exit(1);
   }
@@ -196,10 +197,8 @@ int implicit_solver(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
 
   size_t iteration = 0;
-  while (iteration <= stopTime && !stopFlag)
-  { 
-    /*if (rank == 0) printf("Enter the while iteration %zu\n", iteration);
-    if (rank == 1) printf("Enter the while iteration %zu rank 1\n", iteration);*/
+  while (iteration <= stopTime && !stopFlag){
+    if (rank == 0) printf("%ld ", iteration);
     //--------------------------------------------------------------------------
     //              Conjugate Gradient Method
     //--------------------------------------------------------------------------
@@ -216,12 +215,9 @@ int implicit_solver(int argc, char *argv[])
       exit(1);
     }
 
-    //printf("R\n");
     for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
     {
         r[copyIndex] = concentration[copyIndex];
-        //if(r[copyIndex]>1e-12)
-          //printf("%zu %f, \n", copyIndex, r[copyIndex]);
     }
 
     // p0 = r0
@@ -233,21 +229,17 @@ int implicit_solver(int argc, char *argv[])
       exit(1);
     }
 
-    //printf("P\n");
     for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
     {
         p[copyIndex] = r[copyIndex];
-        //if(p[copyIndex]>1e-12)
-          //printf("%zu %f, \n", copyIndex, p[copyIndex]);
     }
 
     double local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
-    double global_sum;
+    double global_sum, savedR0;
     MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
-    while(sqrt(global_sum)>=parameters.rthreshold)
+    savedR0=global_sum;
+    while(sqrt(global_sum)/sqrt(savedR0)>=parameters.rthreshold)
     {
-      //printf("Norm : %f\n", sqrt(global_sum));
-      // alpha = r^T*r / p^T*A*p
       double *Apvect = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
       if (Apvect == NULL)
@@ -263,20 +255,15 @@ int implicit_solver(int argc, char *argv[])
         exit(1);
       }
 
-      //printf("P2\n");
       for (size_t copyIndex = 0; copyIndex< nodeX*nodeY*thicknessMPI; copyIndex++)
       {
         p2[copyIndex+nodeX*nodeY] = p[copyIndex];
-        //if(p2[copyIndex+nodeX*nodeY] > 1e-12)
-          //printf("%zu %lf ,\n", copyIndex+nodeX*nodeY, p2[copyIndex+nodeX*nodeY]);
       }
 
       // ============================== Send and receive neighboring values
   		int *commList = getCommListSlices(world_size);
   		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2)
   		{
-  			// Get sender (commList[commIndex]) & receiver (commList[commIndex+1])
-  			//printf("S#%d R%d\n", commList[commIndex], commList[commIndex+1]);
   			bool isSender = false;
   			bool isReceiver = false;
   			if (rank == commList[commIndex]) isSender = true;
@@ -361,16 +348,6 @@ int implicit_solver(int argc, char *argv[])
 
       free(Apvect);
       free(p2);
-
-      /*if(rank==1)
-      {
-        for(size_t i=0; i<nodeX*nodeY*thicknessMPI; i++)
-        {
-          if(concentrationSuiv[i] > 1e-12)
-            printf("%zu %lf ,\n", i, concentrationSuiv[i]);
-        }
-      }*/
-
     }
 
     for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
@@ -383,6 +360,7 @@ int implicit_solver(int argc, char *argv[])
       if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
       if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 5e-8)
       {
+          printf("concentration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
           printf("STOP\n");
           valueOnBoundary = true;
           break;
@@ -409,13 +387,6 @@ int implicit_solver(int argc, char *argv[])
         concentration[copyIndex] = concentrationSuiv[copyIndex];
     }
 
-    /*for(size_t i=0; i<nodeX*nodeY*thicknessMPI; i++)
-    {
-      if(concentrationSuiv[i] > 1e-12)
-        printf("%zu %lf ,", i, concentrationSuiv[i]);
-    }
-    printf("\n");*/
-
     // Check if files should be saved
     if (iteration%parameters.S == 0)
     {
@@ -424,7 +395,7 @@ int implicit_solver(int argc, char *argv[])
       int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
       MPI_File output_file;
       char file_name[30];
-      sprintf(file_name, "results/c_%ld.dat",iteration);
+      sprintf(file_name, "resultsImplicit/c_%ld.dat",iteration);
       unsigned int N[] = {nodeX};
 
       MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);

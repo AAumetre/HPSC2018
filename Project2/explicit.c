@@ -118,7 +118,7 @@ int explicit_solver(int argc, char *argv[])
 	int rankMiddle = floor(middleSliceIndex/(thicknessMPI-nbAdditionalSlices));
 	if (rank == rankMiddle){
 		int initValueIndex = nodeX*floor(nodeY/2) + floor(nodeX/2) + nodeX*nodeY*(middleSliceIndex-rank*(thicknessMPI-nbAdditionalSlices));
-		c_[initValueIndex] = initConcentration;
+		c_[initValueIndex+nodeX*nodeY] = initConcentration;
 		printf("Initial value set on node #%d, at index %d\n", rank, initValueIndex);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -131,48 +131,47 @@ int explicit_solver(int argc, char *argv[])
 	{
 		if (rank == 0) printf("%ld ", iteration);
 		// Search for boundaries
-		size_t isXbound = 0;
-		size_t index = 0;
-		if (rank == 0) index = nodeX*nodeY;
-		size_t stopIndex = nodeX*nodeY*thicknessMPI;
-		if (rank == world_size-1) stopIndex -= nodeY*nodeX;
+		//size_t isXbound = 0;
+		//size_t index = 0;
+		//if (rank == 0) index = nodeX*nodeY;
+		//size_t stopIndex = nodeX*nodeY*thicknessMPI;
+		//if (rank == world_size-1) stopIndex -= nodeY*nodeX;
 
 		// ============================== Compute internal values
-		for(index=0; index<stopIndex; index++)
+		for(size_t index=0; index<nodeX*nodeY*thicknessMPI; index++)
 		{
-			int stage = floor(index/(nodeX*nodeY));
-			int inStage0 = index-stage*nodeX*nodeY;
+			bool isOnZBoundary = false;
+			int k = floor(index/(nodeX*nodeY));
+			int j = floor((index-k*nodeX*nodeY)/nodeX);
+			int i = index - k * nodeX * nodeY - j * nodeX;
 
-			if (!(isXbound==0 || isXbound==nodeX-1 || inStage0<nodeX || inStage0>=nodeX*nodeY-nodeX))
-			{//I am in the domain
-				int k = floor(index/(nodeX*nodeY));
-				int j = floor((index-k*nodeX*nodeY)/nodeX);
-				int i = index - k * nodeX * nodeY - j * nodeX;
+			if (rank == 0) isOnZBoundary = (index<nodeX*nodeY);
+	    if (rank == world_size-1) isOnZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
 
+			if (!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1|| isOnZBoundary))
+			{	//I am in the domain
 				int kbis = k+1;
-				int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
-				int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
 
-				concentration[i+j*nodeX+k*nodeX*nodeY] =
-					c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] +
-					parameters.m * parameters.D * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]+
-					c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[ibis+jbis*nodeX+kbis*nodeX*nodeY]+
-					c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY]+c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY]+
-					c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/pow(parameters.h,2) -
-					parameters.m * parameters.vx * (c_[ibis+1+jbis*nodeX+kbis*nodeX*nodeY]-c_[ibis-1+jbis*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
-					parameters.m * parameters.vy * (c_[ibis+(jbis+1)*nodeX+kbis*nodeX*nodeY]-c_[ibis+(jbis-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
-					parameters.m * parameters.vz * (c_[ibis+jbis*nodeX+(kbis+1)*nodeX*nodeY]-c_[ibis+jbis*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
+				concentration[index] =
+					c_[i+j*nodeX+kbis*nodeX*nodeY] +
+					parameters.m * parameters.D * (c_[i+1+j*nodeX+kbis*nodeX*nodeY]+c_[i+(j+1)*nodeX+kbis*nodeX*nodeY]+
+					c_[i+j*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[i+j*nodeX+kbis*nodeX*nodeY]+
+					c_[i-1+j*nodeX+kbis*nodeX*nodeY]+c_[i+(j-1)*nodeX+kbis*nodeX*nodeY]+
+					c_[i+j*nodeX+(kbis-1)*nodeX*nodeY])/pow(parameters.h,2) -
+					parameters.m * parameters.vx * (c_[i+1+j*nodeX+kbis*nodeX*nodeY]-c_[i-1+j*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
+					parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+kbis*nodeX*nodeY]-c_[i+(j-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
+					parameters.m * parameters.vz * (c_[i+j*nodeX+(kbis+1)*nodeX*nodeY]-c_[i+j*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
 
 				// Check the stopping conditions on the boundaries of the domain
 				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
 				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
-				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
-				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 5e-8)){
-				  valueOnBoundary=true;
+				onBoundary = (i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2);
+				if ((onBoundary || onZBoundary)  && (concentration[index] > 5e-8)){
+					valueOnBoundary=true;
+					printf("concentration on boundary = %e at index %zu at iteration %zu\n", concentration[index], index, iteration);
+         			printf("STOP\n");
 				}
 			}
-			isXbound++;
-			if(isXbound==nodeX) isXbound = 0;
 		}
 
 		// Send your status to all the other nodes
@@ -188,6 +187,11 @@ int explicit_solver(int argc, char *argv[])
 			stopFlag = true;
 			break;
 			}
+		}
+
+		for (size_t copyIndex = 0; copyIndex< nodeX*nodeY*thicknessMPI; copyIndex++)
+		{
+			c_[copyIndex+nodeX*nodeY] = concentration[copyIndex];
 		}
 
 		// ============================== Send and receive neighboring values
@@ -251,19 +255,6 @@ int explicit_solver(int argc, char *argv[])
 			}
 		}
 
-
-		for(int index=0; index<stopIndex ; index++)
-		{
-			int k = floor(index/(nodeX*nodeY));
-			int j = floor((index-k*nodeX*nodeY)/nodeX);
-			int i = index - k * nodeX * nodeY - j * nodeX;
-
-			int kbis = k+1;
-			int jbis = floor((index+nodeX*nodeY-kbis*nodeX*nodeY)/nodeX);
-			int ibis = index+nodeX*nodeY - kbis * nodeX * nodeY - jbis * nodeX;
-			c_[ibis+jbis*nodeX+kbis*nodeX*nodeY] = concentration[i+j*nodeX+k*nodeX*nodeY];
-		}
-
 		// Check if files should be saved
 		if (iteration%parameters.S == 0){
 			// ============================== Writing the output file
@@ -271,7 +262,7 @@ int explicit_solver(int argc, char *argv[])
 			int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
 			MPI_File output_file;
 			char file_name[30];
-			sprintf(file_name, "results/c_%ld.dat",iteration);
+			sprintf(file_name, "resultsExplicit/c_%ld.dat",iteration);
 			unsigned int N[] = {nodeX};
 
 			MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
