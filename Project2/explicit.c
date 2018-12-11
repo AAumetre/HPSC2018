@@ -220,12 +220,12 @@ int explicit_solver(int argc, char *argv[])
 						klocal = 0;
 						MPI_Send(&concentration[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 					}
-					else
-					{
-						// Send the lower boundary values
-						klocal = thicknessMPI-1;
-						MPI_Send(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
-					}
+				else
+				{
+					// Send the lower boundary values
+					klocal = thicknessMPI-1;
+					MPI_Send(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+				}
 			}
 			else if (isReceiver){
 				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
