@@ -197,8 +197,9 @@ int implicit_solver(int argc, char *argv[])
 
   size_t iteration = 0;
   while (iteration <= stopTime && !stopFlag)
-  { if (rank == 0) printf("Enter the while iteration %zu\n", iteration);
-    if (rank == 1) printf("Enter the while iteration %zu rank 1\n", iteration);
+  { 
+    /*if (rank == 0) printf("Enter the while iteration %zu\n", iteration);
+    if (rank == 1) printf("Enter the while iteration %zu rank 1\n", iteration);*/
     //--------------------------------------------------------------------------
     //              Conjugate Gradient Method
     //--------------------------------------------------------------------------
@@ -444,5 +445,6 @@ int implicit_solver(int argc, char *argv[])
     iteration+=1;
   }
   MPI_Finalize();
+  
 	return 0;
 }

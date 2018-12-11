@@ -167,7 +167,7 @@ int explicit_solver(int argc, char *argv[])
 				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
 				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
 				onBoundary = ((isXbound == nodeX-2) || (isXbound == 1) || (inStage0 >= nodeX && inStage0 <= 2*nodeX-1) || (inStage0 >= nodeY*nodeY-2*nodeX));
-				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 1e-12)){
+				if ((onBoundary || onZBoundary)  && (concentration[i+j*nodeX+k*nodeX*nodeY] > 5e-8)){
 				  valueOnBoundary=true;
 				}
 			}
