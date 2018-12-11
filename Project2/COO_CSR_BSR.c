@@ -494,3 +494,50 @@ void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *r
 		result->values[matrix->rows[i]] += matrix->values[i]*vector->values[matrix->columns[i]];
 	}
 }
+
+/*============== Direct implementation ===================*/
+// Computes the square of the Euclidian norm of a natural vector
+double SquaredNorm(double* vect, size_t sizeVect)
+{
+  double normVal=0;
+  for(size_t i = 0; i< sizeVect; i++)
+	normVal+=vect[i]*vect[i];
+  return normVal;
+}
+
+// Does a scalar product between two natural vectors
+double VectorProduct(double* vect1, double* vect2, size_t sizeVect)
+{
+  double prod=0;
+  for(size_t i = 0; i< sizeVect; i++)
+	prod+=vect1[i]*vect2[i];
+  return prod;
+}
+
+// Sums two natural vectors and stores the result in a third vector
+void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, size_t sizeVect)
+{
+  for(size_t i = 0; i< sizeVect; i++)
+	vectToStore[i] = vect1[i] + vect2[i]*multVal;
+}
+
+// Pre-computes the application of A to a vector p
+void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknessMPI, double h, double m, double vx, double vy, double vz, double D, int rank, int world_size)
+{
+  for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
+  {
+	bool onZBoundary = false;
+	int k = floor(index/(nodeX*nodeY));
+	int j = floor((index-k*nodeX*nodeY)/nodeX);
+	int i = index - k * nodeX * nodeY - j * nodeX;
+	double Ddivh2 = D/(h*h);
+	if (rank == 0) onZBoundary = (index<nodeX*nodeY);
+	if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
+	if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
+	{
+	  k+=1;
+	  Apresult[index] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
+	  Apresult[index] *= m;
+	}
+  }
+}

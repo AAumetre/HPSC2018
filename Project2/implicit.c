@@ -22,87 +22,7 @@
 
 #define initConcentration 1 //[g/m3]
 
-/* ----------------------------------------------------------------------------*
-* function: SquaredNorm
-* -----------------------------------------------------------------------------*
-* @ param:
-* @ return:
-* -----------------------------------------------------------------------------*
-*
-* ----------------------------------------------------------------------------*/
-double SquaredNorm(double* vect, size_t sizeVect)
-{
-  double normVal=0;
-  for(size_t i = 0; i< sizeVect; i++)
-	normVal+=vect[i]*vect[i];
-  return normVal;
-}
 
-/* ----------------------------------------------------------------------------*
-* function: VectorProduct
-* -----------------------------------------------------------------------------*
-* @ param:
-* @ return:
-* -----------------------------------------------------------------------------*
-*
-* ----------------------------------------------------------------------------*/
-double VectorProduct(double* vect1, double* vect2, size_t sizeVect)
-{
-  double prod=0;
-  for(size_t i = 0; i< sizeVect; i++)
-	prod+=vect1[i]*vect2[i];
-  return prod;
-}
-
-/* ----------------------------------------------------------------------------*
-* function: SumVect
-* -----------------------------------------------------------------------------*
-* @ param:
-* @ return:
-* -----------------------------------------------------------------------------*
-*
-* ----------------------------------------------------------------------------*/
-void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, size_t sizeVect)
-{
-  for(size_t i = 0; i< sizeVect; i++)
-	vectToStore[i] = vect1[i] + vect2[i]*multVal;
-}
-
-/* ----------------------------------------------------------------------------*
-* function: Ap
-* -----------------------------------------------------------------------------*
-* @ param:
-* @ return:
-* -----------------------------------------------------------------------------*
-*
-* ----------------------------------------------------------------------------*/
-void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknessMPI, double h, double m, double vx, double vy, double vz, double D, int rank, int world_size)
-{
-  for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
-  {
-	bool onZBoundary = false;
-	int k = floor(index/(nodeX*nodeY));
-	int j = floor((index-k*nodeX*nodeY)/nodeX);
-	int i = index - k * nodeX * nodeY - j * nodeX;
-	double Ddivh2 = D/(h*h);
-	if (rank == 0) onZBoundary = (index<nodeX*nodeY);
-	if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
-	if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
-	{
-	  k+=1;
-	  Apresult[index] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
-	  Apresult[index] *= m;
-	}
-  }
-}
-
-/* ----------------------------------------------------------------------------*
-* MAIN
-* -----------------------------------------------------------------------------*
-* @ usage
-* -----------------------------------------------------------------------------*
-*
-* ----------------------------------------------------------------------------*/
 int implicit_solver(int argc, char *argv[])
 {
   // Initalizes MPI
@@ -206,7 +126,7 @@ int implicit_solver(int argc, char *argv[])
   #pragma omp parallel //Parallel region of the code
   numthreads = __builtin_omp_get_num_threads();
   size_t iteration = 0;
-  
+
   while (iteration <= stopTime && !stopFlag){
 	if (rank == 0) printf("%ld ", iteration);
 	//--------------------------------------------------------------------------
