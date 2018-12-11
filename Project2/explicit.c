@@ -218,44 +218,26 @@ int explicit_solver(int argc, char *argv[])
 					{ // If sender ID is greater than receiver ID
 						// Send the upper boundary values
 						klocal = 0;
-						for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
-						}
-						//MPI_Send(&concentration[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+						MPI_Send(&concentration[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 					}
 					else
 					{
 						// Send the lower boundary values
 						klocal = thicknessMPI-1;
-						for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-							MPI_Send(&concentration[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
-						}
+						MPI_Send(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
 					}
 			}
 			else if (isReceiver){
 				if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
 					// Get the upper boundary values
 					klocal = thicknessMPI+1;
-					for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
-					}
-					//MPI_Recv(&concentration[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
+					MPI_Recv(&c_[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 				}
 				else
 				{
 					// Get the lower boundary values
 					klocal = 0;
-					for (size_t index = 0; index < nodeX*nodeY; index ++){
-							j = floor(index/nodeX);
-							i = index - j*nodeX;
-						MPI_Recv(&c_[i+j*nodeX+klocal*nodeX*nodeY], 1, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
-					}
+					MPI_Recv(&c_[klocal*nodeX*nodeY],  nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
 				}
 			}
 		}
