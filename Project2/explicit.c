@@ -34,6 +34,7 @@ int explicit_solver(int argc, char *argv[])
 
 	// Declare variables for the main loop
 	size_t iteration = 0;
+	bool writeFlag = false;
 	bool onBoundary = false;
 	bool onZBoundary = false;
 	bool valueOnBoundary = false;
@@ -124,10 +125,10 @@ int explicit_solver(int argc, char *argv[])
 	int numthreads = 1;
 	#pragma omp parallel //Parallel region of the code
 	numthreads = __builtin_omp_get_num_threads();
-	if (rank == 0) printf("Iteration: ");
+	//if (rank == 0) printf("Iteration: ");
 	while (iteration <= stopTime && !stopFlag)
 	{
-		if (rank == 0) printf("%ld ", iteration);
+		//if (rank == 0) printf("%ld ", iteration);
 		// Search for boundaries
 		//size_t isXbound = 0;
 		//size_t index = 0;
@@ -237,7 +238,7 @@ int explicit_solver(int argc, char *argv[])
 		}
 
 		// Check if files should be saved
-		if (iteration%parameters.S == 0){
+		if (iteration%parameters.S == 0 && writeFlag){
 			// ============================== Writing the output file
 			// Use of the MPI file IO functions
 			int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
@@ -268,8 +269,9 @@ int explicit_solver(int argc, char *argv[])
 	MPI_Group_free(&world_group);
 	MPI_Group_free(&sub_world_group);
 	if (!isIdle) MPI_Comm_free(&SUB_COMM);
+	if (rank == 0)
+		printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);
 	MPI_Finalize();
 
-	printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);
 	return 0;
 }

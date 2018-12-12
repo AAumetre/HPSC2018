@@ -32,14 +32,9 @@ int implicit_solver(int argc, char *argv[])
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  //Check out the time
-	clock_t begin = clock();
-	clock_t end = clock();
-	double time_spent;
-
-
   //pour après
   bool valueOnBoundary = false;
+	bool writeFlag = false;
   int *stopFlags = calloc(world_size, sizeof(int));
 	int *stopFlagsFromOthers = calloc(world_size, sizeof(int));
   bool stopFlag = false;
@@ -128,7 +123,7 @@ int implicit_solver(int argc, char *argv[])
   size_t iteration = 0;
 
   while (iteration <= stopTime && !stopFlag){
-	if (rank == 0) printf("%ld ", iteration);
+	//if (rank == 0) printf("%ld ", iteration);
 	//--------------------------------------------------------------------------
 	//              Conjugate Gradient Method
 	//--------------------------------------------------------------------------
@@ -302,7 +297,7 @@ int implicit_solver(int argc, char *argv[])
 	}
 
 	// Check if files should be saved
-	if (iteration%parameters.S == 0)
+	if (iteration%parameters.S == 0 && writeFlag)
 	{
 	  // ============================== Writing the output file
 	  // Use of the MPI file IO functions
@@ -329,12 +324,10 @@ int implicit_solver(int argc, char *argv[])
 
 	iteration+=1;
   }
-  if (rank == 0){
-	end = clock();
-	time_spent = (double)(end - begin) / (CLOCKS_PER_SEC);
-	printf("\nJob done in %2.4lf s, using %d nodes.\n", time_spent, world_size);
-  }
+  if (rank == 0)
+		printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);
+
   MPI_Finalize();
-  
+
 	return 0;
 }
