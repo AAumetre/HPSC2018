@@ -117,11 +117,12 @@ int implicit_solver(int argc, char *argv[])
   }
   MPI_Barrier(MPI_COMM_WORLD);
 
-  int numthreads = 1;
-  #pragma omp parallel //Parallel region of the code
-  numthreads = __builtin_omp_get_num_threads();
   size_t iteration = 0;
 
+
+	int numthreads = 1;
+	#pragma omp parallel //Parallel region of the code
+	numthreads = __builtin_omp_get_num_threads();
   while (iteration <= stopTime && !stopFlag){
 	//if (rank == 0) printf("%ld ", iteration);
 	//--------------------------------------------------------------------------
