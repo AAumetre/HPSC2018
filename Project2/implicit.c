@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
+#include <omp.h>
 
 #include "COO_CSR_BSR.h"
 #include "algorithms.h"
@@ -118,10 +119,7 @@ int implicit_solver(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
 
   size_t iteration = 0;
-
-
-	int numthreads = 1;
-	#pragma omp parallel //Parallel region of the code
+int numthreads = 1;
 	numthreads = __builtin_omp_get_num_threads();
   while (iteration <= stopTime && !stopFlag){
 	//if (rank == 0) printf("%ld ", iteration);
@@ -164,6 +162,12 @@ int implicit_solver(int argc, char *argv[])
 	double global_sum, savedR0;
 	MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
 	savedR0=global_sum;
+
+
+
+
+
+
 	while(sqrt(global_sum)/sqrt(savedR0)>=parameters.rthreshold)
 	{
 	  double *Apvect = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
@@ -260,6 +264,14 @@ int implicit_solver(int argc, char *argv[])
 	  free(p2);
 	}
 
+
+
+
+
+
+
+
+
 	for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
 	{
 	  bool onZBoundary = false;
@@ -325,6 +337,8 @@ int implicit_solver(int argc, char *argv[])
 
 	iteration+=1;
   }
+
+
   if (rank == 0)
 		printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);
 
