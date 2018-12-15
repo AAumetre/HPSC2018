@@ -46,7 +46,8 @@ int implicit_solver(int argc, char *argv[])
 	size_t nodeY = nodeX, nodeZ =nodeX;
 	size_t stopTime = parameters.Tmax/parameters.m;
 
-  if (rank == 0) {
+  if (rank == 0)
+	{
 		printf("We have %d nodes\n", world_size);
 		printf("Number of slices: %zu\n", nodeZ);
 		printf("=====================================\n");
@@ -55,21 +56,22 @@ int implicit_solver(int argc, char *argv[])
 
 	// If there are more nodes than possible slices, the surplus nodes are set to idle
 	int *ranks = calloc(world_size, sizeof(int));
-	if (world_size > nodeZ){ // Change the value of world_size to that further calculations are still valid
+	if (world_size > nodeZ)
+	{ // Change the value of world_size to that further calculations are still valid
 		world_size = nodeZ;
-		for (int i = 0; i < nodeZ; ++i){
+		for (int i = 0; i < nodeZ; ++i)
 			ranks[i] = i;
-		}
-		if (rank >= world_size){ // Idle this node
+		if (rank >= world_size)
+		{ // Idle this node
 			printf("Node %d was set to idle.\n", rank);
 			isIdle = true;
 			stopFlag = true;
 		}
 	}
-	else{
-		for (int i = 0; i < world_size; ++i){
+	else
+	{
+		for (int i = 0; i < world_size; ++i)
 			ranks[i] = i;
-		}
 	}
 
 	// If there are some idling nodes, exclude them from the new communicator
@@ -85,7 +87,8 @@ int implicit_solver(int argc, char *argv[])
 	int nbAdditionalSlices = 0;
 	size_t thicknessMPI = 0;
 	int *share = shareWorkload(nodeZ, world_size);
-	if (rank == world_size-1 && world_size != 1){
+	if (rank == world_size-1 && world_size != 1)
+	{
 		thicknessMPI = share[0];
 		nbAdditionalSlices = share[0]-share[1];
 	}
@@ -102,8 +105,8 @@ int implicit_solver(int argc, char *argv[])
 
   if (concentration == NULL)
   {
-	puts("Mem ERR0R !");
-	exit(1);
+		puts("Mem ERR0R !");
+		exit(1);
   }
 
   // Give initial concentration value
@@ -111,9 +114,9 @@ int implicit_solver(int argc, char *argv[])
   int rankMiddle = floor(middleSliceIndex/(thicknessMPI-nbAdditionalSlices));
   if (rank == rankMiddle)
   {
-	int initValueIndex = nodeX*floor(nodeY/2) + floor(nodeX/2) + nodeX*nodeY*(middleSliceIndex-rank*(thicknessMPI-nbAdditionalSlices));
-	concentration[initValueIndex] = initConcentration;
-	printf("Initial value set on node #%d, at index %d\n", rank, initValueIndex);
+		int initValueIndex = nodeX*floor(nodeY/2) + floor(nodeX/2) + nodeX*nodeY*(middleSliceIndex-rank*(thicknessMPI-nbAdditionalSlices));
+		concentration[initValueIndex] = initConcentration;
+		printf("Initial value set on node #%d, at index %d\n", rank, initValueIndex);
   }
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -122,207 +125,200 @@ int implicit_solver(int argc, char *argv[])
   numthreads = __builtin_omp_get_num_threads();
   size_t iteration = 0;
 
-  while (iteration <= stopTime && !stopFlag){
-	//if (rank == 0) printf("%ld ", iteration);
-	//--------------------------------------------------------------------------
-	//              Conjugate Gradient Method
-	//--------------------------------------------------------------------------
-	// x0 = 0
-	double *concentrationSuiv = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-
-	// r0 = b - Ax0 = b
-	double *r = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-	double *rsuiv = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-
-	if (r == NULL || rsuiv == NULL || concentrationSuiv == NULL)
+  while (iteration <= stopTime && !stopFlag)
 	{
-	  puts("Mem ERR0R concentrationSuiv or r or rsuiv!");
-	  exit(1);
-	}
+		//--------------------------------------------------------------------------
+		//              Conjugate Gradient Method
+		//--------------------------------------------------------------------------
+		// x0 = 0
+		double *concentrationSuiv = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
-	for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
-	{
-		r[copyIndex] = concentration[copyIndex];
-	}
+		// r0 = b - Ax0 = b
+		double *r = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
+		double *rsuiv = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
 
-	// p0 = r0
-	double *p = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-
-	if (p == NULL)
-	{
-	  puts("Mem ERR0R p!");
-	  exit(1);
-	}
-
-	for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
-	{
-		p[copyIndex] = r[copyIndex];
-	}
-
-	double local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
-	double global_sum, savedR0;
-	MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
-	savedR0=global_sum;
-	while(sqrt(global_sum)/sqrt(savedR0)>=parameters.rthreshold)
-	{
-	  double *Apvect = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
-
-	  if (Apvect == NULL)
-	  {
-		puts("Mem ERR0R Apvect!");
-		exit(1);
-	  }
-	  //Get neighbours
-	  double *p2 = calloc(nodeX*nodeY*(thicknessMPI+2), sizeof(double));
-	  if (p2 == NULL)
-	  {
-		puts("Mem ERR0R p!");
-		exit(1);
-	  }
-
-	  for (size_t copyIndex = 0; copyIndex< nodeX*nodeY*thicknessMPI; copyIndex++)
-	  {
-		p2[copyIndex+nodeX*nodeY] = p[copyIndex];
-	  }
-
-	  // ============================== Send and receive neighboring values
-		int *commList = getCommListSlices(world_size);
-		for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2)
+		if (r == NULL || rsuiv == NULL || concentrationSuiv == NULL)
 		{
-			bool isSender = false;
-			bool isReceiver = false;
-			if (rank == commList[commIndex]) isSender = true;
-			if (rank == commList[commIndex+1]) isReceiver = true;
-			int klocal = 0;
-			int i = 0;
-			int j = 0;
-			if (isSender)
-	  {
-		if (commList[commIndex] > commList[commIndex+1])
-		  { // If sender ID is greater than receiver ID
-			// Send the upper boundary values
-			klocal = 0;
-			MPI_Send(&p[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+		  puts("Mem ERR0R concentrationSuiv or r or rsuiv!");
+		  exit(1);
+		}
+
+		for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
+			r[copyIndex] = concentration[copyIndex];
+
+		// p0 = r0
+		double *p = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
+
+		if (p == NULL)
+		{
+		  puts("Mem ERR0R p!");
+		  exit(1);
+		}
+
+		for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
+			p[copyIndex] = r[copyIndex];
+
+		double local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
+		double global_sum, savedR0;
+		MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+		savedR0=global_sum;
+		while(sqrt(global_sum)/sqrt(savedR0)>=parameters.rthreshold)
+		{
+		  double *Apvect = calloc(nodeX*nodeY*thicknessMPI, sizeof(double));
+
+		  if (Apvect == NULL)
+		  {
+				puts("Mem ERR0R Apvect!");
+				exit(1);
 		  }
-		else
-		{
-		  // Send the lower boundary values
-		  klocal = thicknessMPI-1;
-		  MPI_Send(&p[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
-		}
-	  }
-	  else if (isReceiver){
-		if (commList[commIndex] > commList[commIndex+1]){ // If sender ID is greater than receiver ID
-		  // Get the upper boundary values
-		  klocal = thicknessMPI+1;
-		  MPI_Recv(&p2[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
-		}
-		else
-		{
-		  // Get the lower boundary values
-		  klocal = 0;
-		  MPI_Recv(&p2[klocal*nodeX*nodeY],  nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
-		}
-	  }
-		}
-	  Ap(p2, Apvect, nodeX, nodeY, thicknessMPI, parameters.h, parameters.m, parameters.vx, parameters.vy, parameters.vz, parameters.D, rank, world_size);
-	  double rtr = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
-	  double global_rtr;
-	  MPI_Allreduce(&rtr, &global_rtr, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
-	  double ptAp = VectorProduct(p, Apvect, nodeX*nodeY*thicknessMPI);
-	  double global_ptAp;
-	  MPI_Allreduce(&ptAp, &global_ptAp, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
-	  double alpha = global_rtr / global_ptAp;
+		  //Get neighbours
+		  double *p2 = calloc(nodeX*nodeY*(thicknessMPI+2), sizeof(double));
+		  if (p2 == NULL)
+		  {
+				puts("Mem ERR0R p!");
+				exit(1);
+		  }
 
-	  // xi+1 = xi + alpha*p
-	  SumVect(concentrationSuiv, concentrationSuiv, p, alpha, nodeX*nodeY*thicknessMPI);
+		  for (size_t copyIndex = 0; copyIndex< nodeX*nodeY*thicknessMPI; copyIndex++)
+				p2[copyIndex+nodeX*nodeY] = p[copyIndex];
 
-	  // ri+1 = ri - alpha*Ap
-	  SumVect(rsuiv, r, Apvect, -alpha, nodeX*nodeY*thicknessMPI);
-
-	  // beta = ri+1^T*ri+1 / ri^T*ri
-	  double rSuitrSui = SquaredNorm(rsuiv, nodeX*nodeY*thicknessMPI);
-	  double global_rSuitrSui;
-	  MPI_Allreduce(&rSuitrSui, &global_rSuitrSui, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
-	  double beta = global_rSuitrSui / global_rtr;
-
-	  // pi+1 = ri+1 + beta*p
-	  SumVect(p, rsuiv, p, beta, nodeX*nodeY*thicknessMPI);
-	  for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
-	  {
-		  r[copyIndex] = rsuiv[copyIndex];
-	  }
-	  local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
-	  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
-
-	  free(Apvect);
-	  free(p2);
-	}
-
-	for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
-	{
-	  bool onZBoundary = false;
-	  int k = floor(index/(nodeX*nodeY));
-	  int j = floor((index-k*nodeX*nodeY)/nodeX);
-	  int i = index - k * nodeX * nodeY - j * nodeX;
-	  if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
-	  if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
-	  if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 5e-8)
-	  {
-		  printf("concentration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
-		  printf("STOP\n");
-		  valueOnBoundary = true;
-		  break;
-	  }
-	}
-
-	// Send your status to all the other nodes
-		for (int i = 0; i < world_size; ++i)
-		{
-			if(valueOnBoundary)stopFlags[i] = 1;
-		}
-		MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, SUB_COMM);
-		for (int i = 0; i < world_size; ++i)
-		{
-			if(stopFlagsFromOthers[i] == 1)
+		  // ============================== Send and receive neighboring values
+			int *commList = getCommListSlices(world_size);
+			for (int commIndex=0 ; commIndex<4*(world_size-1) ; commIndex += 2)
 			{
-			stopFlag = true;
-			break;
+				bool isSender = false;
+				bool isReceiver = false;
+				if (rank == commList[commIndex]) isSender = true;
+				if (rank == commList[commIndex+1]) isReceiver = true;
+				int klocal = 0;
+				int i = 0;
+				int j = 0;
+				if (isSender)
+			  {
+					if (commList[commIndex] > commList[commIndex+1])
+				  { // If sender ID is greater than receiver ID
+						// Send the upper boundary values
+						klocal = 0;
+						MPI_Send(&p[0], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+				  }
+					else
+					{
+					  // Send the lower boundary values
+					  klocal = thicknessMPI-1;
+					  MPI_Send(&p[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex+1], 0, SUB_COMM);
+					}
+		  	}
+		  	else if (isReceiver)
+				{
+					if (commList[commIndex] > commList[commIndex+1])
+					{ // If sender ID is greater than receiver ID
+					  // Get the upper boundary values
+					  klocal = thicknessMPI+1;
+					  MPI_Recv(&p2[klocal*nodeX*nodeY], nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
+					}
+					else
+					{
+					  // Get the lower boundary values
+					  klocal = 0;
+					  MPI_Recv(&p2[klocal*nodeX*nodeY],  nodeX*nodeY, MPI_DOUBLE, commList[commIndex], 0, SUB_COMM, MPI_STATUS_IGNORE);
+					}
+		  	}
 			}
+		  Ap(p2, Apvect, nodeX, nodeY, thicknessMPI, parameters.h, parameters.m, parameters.vx, parameters.vy, parameters.vz, parameters.D, rank, world_size);
+		  double rtr = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
+		  double global_rtr;
+		  MPI_Allreduce(&rtr, &global_rtr, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+		  double ptAp = VectorProduct(p, Apvect, nodeX*nodeY*thicknessMPI);
+		  double global_ptAp;
+		  MPI_Allreduce(&ptAp, &global_ptAp, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+		  double alpha = global_rtr / global_ptAp;
+
+		  // xi+1 = xi + alpha*p
+		  SumVect(concentrationSuiv, concentrationSuiv, p, alpha, nodeX*nodeY*thicknessMPI);
+
+		  // ri+1 = ri - alpha*Ap
+		  SumVect(rsuiv, r, Apvect, -alpha, nodeX*nodeY*thicknessMPI);
+
+		  // beta = ri+1^T*ri+1 / ri^T*ri
+		  double rSuitrSui = SquaredNorm(rsuiv, nodeX*nodeY*thicknessMPI);
+		  double global_rSuitrSui;
+		  MPI_Allreduce(&rSuitrSui, &global_rSuitrSui, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+		  double beta = global_rSuitrSui / global_rtr;
+
+		  // pi+1 = ri+1 + beta*p
+		  SumVect(p, rsuiv, p, beta, nodeX*nodeY*thicknessMPI);
+		  for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
+			  r[copyIndex] = rsuiv[copyIndex];
+
+		  local_sum = SquaredNorm(r, nodeX*nodeY*thicknessMPI);
+		  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, SUB_COMM);
+
+		  free(Apvect);
+		  free(p2);
 		}
 
-	for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
-	{
-		concentration[copyIndex] = concentrationSuiv[copyIndex];
-	}
+		for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
+		{
+		  bool onZBoundary = false;
+		  int k = floor(index/(nodeX*nodeY));
+		  int j = floor((index-k*nodeX*nodeY)/nodeX);
+		  int i = index - k * nodeX * nodeY - j * nodeX;
+		  if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
+		  if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
+		  if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 5e-8)
+		  {
+			  printf("concentration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
+			  printf("STOP\n");
+			  valueOnBoundary = true;
+			  break;
+		  }
+		}
 
-	// Check if files should be saved
-	if (iteration%parameters.S == 0 && writeFlag)
-	{
-	  // ============================== Writing the output file
-	  // Use of the MPI file IO functions
-	  int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
-	  MPI_File output_file;
-	  char file_name[30];
-	  sprintf(file_name, "resultsImplicit/c_%ld.dat",iteration);
-	  unsigned int N[] = {nodeX};
+		// Send your status to all the other nodes
+			for (int i = 0; i < world_size; ++i)
+				if(valueOnBoundary)stopFlags[i] = 1;
 
-	  MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
-	  if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
-	  MPI_Offset displacement;
-	  displacement = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
-	  // Set the view the current node has
-	  MPI_File_seek(output_file, displacement, MPI_SEEK_SET);
-	  MPI_File_write(output_file, concentration, nodeX*nodeY*thicknessMPI, MPI_DOUBLE, MPI_STATUS_IGNORE);
-	  MPI_File_close(&output_file);
-	}
+			MPI_Allgather(stopFlags, 1, MPI_INT, stopFlagsFromOthers, 1, MPI_INT, SUB_COMM);
+			for (int i = 0; i < world_size; ++i)
+			{
+				if(stopFlagsFromOthers[i] == 1)
+				{
+					stopFlag = true;
+					break;
+				}
+			}
 
-	free(concentrationSuiv);
-	free(p);
-	free(r);
-	free(rsuiv);
+		for (size_t copyIndex = 0; copyIndex < nodeX*nodeY*thicknessMPI; copyIndex++)
+			concentration[copyIndex] = concentrationSuiv[copyIndex];
 
-	iteration+=1;
+
+		// Check if files should be saved
+		if (iteration%parameters.S == 0 && writeFlag)
+		{
+		  // ============================== Writing the output file
+		  // Use of the MPI file IO functions
+		  int data_size = thicknessMPI*nodeX*nodeY; // doubles, data every node has (this is a number, not bytes!)
+		  MPI_File output_file;
+		  char file_name[30];
+		  sprintf(file_name, "resultsImplicit/c_%ld.dat",iteration);
+		  unsigned int N[] = {nodeX};
+
+		  MPI_File_open(SUB_COMM, file_name, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &output_file);
+		  if (rank == 0) MPI_File_write(output_file, N, 1, MPI_UNSIGNED, MPI_STATUS_IGNORE);
+		  MPI_Offset displacement;
+		  displacement = rank*(thicknessMPI-nbAdditionalSlices)*nodeX*nodeY*sizeof(double) + sizeof(unsigned int); // Displacement in bytes
+		  // Set the view the current node has
+		  MPI_File_seek(output_file, displacement, MPI_SEEK_SET);
+		  MPI_File_write(output_file, concentration, nodeX*nodeY*thicknessMPI, MPI_DOUBLE, MPI_STATUS_IGNORE);
+		  MPI_File_close(&output_file);
+		}
+
+		free(concentrationSuiv);
+		free(p);
+		free(r);
+		free(rsuiv);
+
+		iteration+=1;
   }
   if (rank == 0)
 		printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);

@@ -132,7 +132,7 @@ void convert_natural_to_bsr(double *natural, bsr_matrix *matrix, int size, int b
 	for (int i = 0; i < block_count; ++i){
 		matrix->block_columns[i] = temp_block_columns[i];
 	}
-	
+
 	free(temp_block_row_offsets);
 	free(temp_block_columns);
 	free(temp_values);
@@ -219,7 +219,7 @@ void coo_matrix_scale(coo_matrix *matrix, double scale){
 void coo_matrix_free(coo_matrix *matrix){
 	free(matrix->rows);
 	free(matrix->columns);
-	free(matrix->values);	
+	free(matrix->values);
 }
 
 /*============== CSR Vector functions ===================*/
@@ -500,6 +500,7 @@ void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *r
 double SquaredNorm(double* vect, size_t sizeVect)
 {
   double normVal=0;
+	#pragma omp parallel for default(none) shared(sizeVect, vect) private(i) reduction(+:normVal) schedule(static)
   for(size_t i = 0; i< sizeVect; i++)
 	normVal+=vect[i]*vect[i];
   return normVal;
@@ -509,6 +510,7 @@ double SquaredNorm(double* vect, size_t sizeVect)
 double VectorProduct(double* vect1, double* vect2, size_t sizeVect)
 {
   double prod=0;
+	#pragma omp parallel for default(none) shared(sizeVect, vect1, vect2) private(i) reduction(+:prod) schedule(static)
   for(size_t i = 0; i< sizeVect; i++)
 	prod+=vect1[i]*vect2[i];
   return prod;
@@ -517,6 +519,7 @@ double VectorProduct(double* vect1, double* vect2, size_t sizeVect)
 // Sums two natural vectors and stores the result in a third vector
 void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, size_t sizeVect)
 {
+	#pragma omp parallel for default(none) shared(sizeVect, vect1, vect2, vectToStore, multVal) private(i) schedule(static)
   for(size_t i = 0; i< sizeVect; i++)
 	vectToStore[i] = vect1[i] + vect2[i]*multVal;
 }
@@ -526,18 +529,18 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknes
 {
   for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
   {
-	bool onZBoundary = false;
-	int k = floor(index/(nodeX*nodeY));
-	int j = floor((index-k*nodeX*nodeY)/nodeX);
-	int i = index - k * nodeX * nodeY - j * nodeX;
-	double Ddivh2 = D/(h*h);
-	if (rank == 0) onZBoundary = (index<nodeX*nodeY);
-	if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
-	if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
-	{
-	  k+=1;
-	  Apresult[index] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
-	  Apresult[index] *= m;
-	}
+		bool onZBoundary = false;
+		int k = floor(index/(nodeX*nodeY));
+		int j = floor((index-k*nodeX*nodeY)/nodeX);
+		int i = index - k * nodeX * nodeY - j * nodeX;
+		double Ddivh2 = D/(h*h);
+		if (rank == 0) onZBoundary = (index<nodeX*nodeY);
+		if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
+		if(!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1 || onZBoundary))
+		{
+		  k+=1;
+		  Apresult[index] = p[i+j*nodeX+k*nodeX*nodeY]*(1/m + 6*Ddivh2) + p[i-1+j*nodeX+k*nodeX*nodeY]*(-vx/(2*h) - Ddivh2) + p[i+1+j*nodeX+k*nodeX*nodeY]*(vx/(2*h) - Ddivh2) + p[i+(j-1)*nodeX+k*nodeX*nodeY]*(-vy/(2*h) - Ddivh2) + p[i+(j+1)*nodeX+k*nodeX*nodeY]*(vy/(2*h) - Ddivh2) + p[i+j*nodeX+(k-1)*nodeX*nodeY]*(-vz/(2*h) -Ddivh2) + p[i+j*nodeX+(k+1)*nodeX*nodeY]*(vz/(2*h) - Ddivh2);
+		  Apresult[index] *= m;
+		}
   }
 }

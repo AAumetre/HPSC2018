@@ -15,7 +15,7 @@ module load openmpi/1.8.4/gcc-4.9.2
 #####  #SBATCH --exclusive
 #####  #      ############# OR --exclusive to get a full node for the job
 
-#SBATCH --time=30:00
+#SBATCH --time=120:00
 #SBATCH --mem-per-cpu=3000
 
 
@@ -23,9 +23,9 @@ module load openmpi/1.8.4/gcc-4.9.2
 
 echo "Explicit";
 for ii in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16;
+do
 echo -e "\n\n**" $ii;
 OMP_NUM_THREADS=$ii
-do
   for jj in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16;
   do
   echo -e "\n\n**" $jj;
