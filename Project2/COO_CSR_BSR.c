@@ -500,6 +500,7 @@ void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *r
 double SquaredNorm(double* vect, size_t sizeVect)
 {
   double normVal=0;
+	#pragma omp for
   for(size_t i = 0; i< sizeVect; i++)
 	normVal+=vect[i]*vect[i];
   return normVal;
@@ -524,6 +525,7 @@ void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, 
 // Pre-computes the application of A to a vector p
 void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknessMPI, double h, double m, double vx, double vy, double vz, double D, int rank, int world_size)
 {
+
   for(size_t index = 0; index< nodeX*nodeY*thicknessMPI; index++)
   {
 	bool onZBoundary = false;
@@ -540,4 +542,5 @@ void Ap(double* p, double* Apresult, size_t nodeX, size_t nodeY, size_t thicknes
 	  Apresult[index] *= m;
 	}
   }
+
 }

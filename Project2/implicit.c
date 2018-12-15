@@ -119,8 +119,6 @@ int implicit_solver(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
 
   size_t iteration = 0;
-int numthreads = 1;
-	numthreads = __builtin_omp_get_num_threads();
   while (iteration <= stopTime && !stopFlag){
 	//if (rank == 0) printf("%ld ", iteration);
 	//--------------------------------------------------------------------------
@@ -339,8 +337,11 @@ int numthreads = 1;
   }
 
 
-  if (rank == 0)
+	int numthreads = __builtin_omp_get_num_threads();
+  if (rank == 0){
+
 		printf("\nJob done using %d nodes and %d threads.\n", world_size, numthreads);
+	}
 
   MPI_Finalize();
 
