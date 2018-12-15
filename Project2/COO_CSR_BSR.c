@@ -500,8 +500,9 @@ void coo_matrix_nat_vector(coo_matrix *matrix, nat_vector *vector, nat_vector *r
 double SquaredNorm(double* vect, size_t sizeVect)
 {
   double normVal=0;
+	size_t i;
 	#pragma omp parallel for default(none) shared(sizeVect, vect) private(i) reduction(+:normVal) schedule(static)
-  for(size_t i = 0; i< sizeVect; i++)
+  for(i = 0; i< sizeVect; i++)
 	normVal+=vect[i]*vect[i];
   return normVal;
 }
@@ -510,8 +511,9 @@ double SquaredNorm(double* vect, size_t sizeVect)
 double VectorProduct(double* vect1, double* vect2, size_t sizeVect)
 {
   double prod=0;
+	size_t i;
 	#pragma omp parallel for default(none) shared(sizeVect, vect1, vect2) private(i) reduction(+:prod) schedule(static)
-  for(size_t i = 0; i< sizeVect; i++)
+  for(i = 0; i< sizeVect; i++)
 	prod+=vect1[i]*vect2[i];
   return prod;
 }
@@ -519,8 +521,9 @@ double VectorProduct(double* vect1, double* vect2, size_t sizeVect)
 // Sums two natural vectors and stores the result in a third vector
 void SumVect(double* vectToStore, double* vect1, double* vect2, double multVal, size_t sizeVect)
 {
+	size_t i;
 	#pragma omp parallel for default(none) shared(sizeVect, vect1, vect2, vectToStore, multVal) private(i) schedule(static)
-  for(size_t i = 0; i< sizeVect; i++)
+  for(i = 0; i< sizeVect; i++)
 	vectToStore[i] = vect1[i] + vect2[i]*multVal;
 }
 

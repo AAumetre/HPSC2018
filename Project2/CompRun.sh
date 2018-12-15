@@ -4,16 +4,42 @@ clear
 #./Main
 
 #module load openmpi/1.8.4/gcc-4.9.2
-OMP_NUM_THREADS=2
+OMP_NUM_THREADS=4
 
-t0=$(date +%s%3N)
-mpicc -g -o Octopus octopus.c explicit.c implicit.c COO_CSR_BSR.c fileIO.c algorithms.c -lm -std=c99 -fopenmp
-mpiexec -np 2 ./Octopus param_medium.dat 1
-t1=$(date +%s%3N)
-  echo "Elapsed wall clock time = " $(( $t1-$t0 )) " milliseconds."
+#t0=$(date +%s%3N)
+#mpicc -g -o Octopus octopus.c explicit.c implicit.c COO_CSR_BSR.c fileIO.c algorithms.c -lm -std=c99 -fopenmp
+#mpiexec -np 2 ./Octopus param_medium.dat 1
+#t1=$(date +%s%3N)
+  #echo "Elapsed wall clock time = " $(( $t1-$t0 )) " milliseconds."
 
 #mpicc -g -o Octopus octopus.c explicit.c implicit.c COO_CSR_BSR.c fileIO.c algorithms.c -lm -std=c99 -fopenmp
 #mpiexec -np 2 time ./Octopus param_medium.dat 0
 
 #mpicc -g -o Octopus octopus.c explicit.c implicit.c COO_CSR_BSR.c fileIO.c algorithms.c -lm -std=c99 -fopenmp
 #mpiexec -np 4 ./Octopus param_medium.dat 1
+
+echo "Implicit";
+
+echo "Tiny";
+t0=$(date +%s%3N)
+mpiexec -np 4 ./Octopus param_tiny.dat 1;
+t1=$(date +%s%3N)
+echo "Elapsed wall clock time = " $(( $t1-$t0 )) " milliseconds."
+
+echo "Small";
+t0=$(date +%s%3N)
+mpiexec -np 4 ./Octopus param_small.dat 1;
+t1=$(date +%s%3N)
+echo "Elapsed wall clock time = " $(( $t1-$t0 )) " milliseconds."
+
+echo "Medium";
+t0=$(date +%s%3N)
+mpiexec -np 4 ./Octopus param_medium.dat 1;
+t1=$(date +%s%3N)
+echo "Elapsed wall clock time = " $(( $t1-$t0 )) " milliseconds."
+
+echo "Big";
+t0=$(date +%s%3N)
+mpiexec -np 4 ./Octopus param_big.dat 1;
+t1=$(date +%s%3N)
+echo "Elapsed wall clock time = " $(( $t1-$t0 )) " milliseconds."

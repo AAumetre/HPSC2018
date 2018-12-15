@@ -5,7 +5,7 @@ module load openmpi/1.8.4/gcc-4.9.2
 #SBATCH --job-name=test_mpi
 #SBATCH --mail-user=cmoureau@student.uliege.be
 #SBATCH --mail-type=ALL
-#SBATCH --output=scalability_weak.txt
+#SBATCH --output=scalability_weak_impl.txt
 #
 #SBATCH --ntasks=4
 #SBATCH --cpus-per-task=4
@@ -15,7 +15,7 @@ module load openmpi/1.8.4/gcc-4.9.2
 #####  #SBATCH --exclusive
 #####  #      ############# OR --exclusive to get a full node for the job
 
-#SBATCH --time=5:00
+#SBATCH --time=60:00
 #SBATCH --mem-per-cpu=3000
 
 
