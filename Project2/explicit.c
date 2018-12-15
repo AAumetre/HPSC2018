@@ -123,7 +123,6 @@ int explicit_solver(int argc, char *argv[])
 	#	Main loop
 	================================================================================================*/
 	int numthreads = 1;
-	#pragma omp parallel //Parallel region of the code
 	numthreads = __builtin_omp_get_num_threads();
 	//if (rank == 0) printf("Iteration: ");
 	while (iteration <= stopTime && !stopFlag)
@@ -137,7 +136,7 @@ int explicit_solver(int argc, char *argv[])
 		//if (rank == world_size-1) stopIndex -= nodeY*nodeX;
 
 		// ============================== Compute internal values
-		#pragma omp for
+		#pragma omp parallel for
 		for(size_t index=0; index<nodeX*nodeY*thicknessMPI; index++)
 		{
 			bool isOnZBoundary = false;
@@ -189,6 +188,7 @@ int explicit_solver(int argc, char *argv[])
 			}
 		}
 
+		#pragma omp parallel for
 		for (size_t copyIndex = 0; copyIndex< nodeX*nodeY*thicknessMPI; copyIndex++)
 		{
 			c_[copyIndex+nodeX*nodeY] = concentration[copyIndex];
