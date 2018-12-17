@@ -49,7 +49,10 @@ int explicit_solver(int argc, char *argv[])
 	size_t nodeY = nodeX, nodeZ =nodeX;
 	size_t stopTime = parameters.Tmax/parameters.m;
 
-	if (rank == 0) {
+	if (rank == 0)
+	{
+		printf("L %lf\n", parameters.L);
+		printf("h %lf\n", parameters.h);
 		printf("We have %d nodes\n", world_size);
 		printf("Number of slices: %zu\n", nodeZ);
 		printf("=====================================\n");
@@ -123,7 +126,6 @@ int explicit_solver(int argc, char *argv[])
 	#	Main loop
 	================================================================================================*/
 	int numthreads = 1;
-	numthreads = __builtin_omp_get_num_threads();
 	//if (rank == 0) printf("Iteration: ");
 	while (iteration <= stopTime && !stopFlag)
 	{
@@ -137,41 +139,42 @@ int explicit_solver(int argc, char *argv[])
 
 		// ============================== Compute internal values
 		#pragma omp parallel for
-		for(size_t index=0; index<nodeX*nodeY*thicknessMPI; index++)
-		{
-			bool isOnZBoundary = false;
-			int k = floor(index/(nodeX*nodeY));
-			int j = floor((index-k*nodeX*nodeY)/nodeX);
-			int i = index - k * nodeX * nodeY - j * nodeX;
+			for(size_t index=0; index<nodeX*nodeY*thicknessMPI; index++)
+			{
+				numthreads = __builtin_omp_get_num_threads();
+				bool isOnZBoundary = false;
+				int k = floor(index/(nodeX*nodeY));
+				int j = floor((index-k*nodeX*nodeY)/nodeX);
+				int i = index - k * nodeX * nodeY - j * nodeX;
 
-			if (rank == 0) isOnZBoundary = (index<nodeX*nodeY);
-	    if (rank == world_size-1) isOnZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
+				if (rank == 0) isOnZBoundary = (index<nodeX*nodeY);
+		    if (rank == world_size-1) isOnZBoundary = (index>=(thicknessMPI-1)*nodeX*nodeX);
 
-			if (!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1|| isOnZBoundary))
-			{	//I am in the domain
-				int kbis = k+1;
+				if (!(i==0 || i == nodeX-1 || j==0 || j == nodeY-1|| isOnZBoundary))
+				{	//I am in the domain
+					int kbis = k+1;
 
-				concentration[index] =
-					c_[i+j*nodeX+kbis*nodeX*nodeY] +
-					parameters.m * parameters.D * (c_[i+1+j*nodeX+kbis*nodeX*nodeY]+c_[i+(j+1)*nodeX+kbis*nodeX*nodeY]+
-					c_[i+j*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[i+j*nodeX+kbis*nodeX*nodeY]+
-					c_[i-1+j*nodeX+kbis*nodeX*nodeY]+c_[i+(j-1)*nodeX+kbis*nodeX*nodeY]+
-					c_[i+j*nodeX+(kbis-1)*nodeX*nodeY])/pow(parameters.h,2) -
-					parameters.m * parameters.vx * (c_[i+1+j*nodeX+kbis*nodeX*nodeY]-c_[i-1+j*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
-					parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+kbis*nodeX*nodeY]-c_[i+(j-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
-					parameters.m * parameters.vz * (c_[i+j*nodeX+(kbis+1)*nodeX*nodeY]-c_[i+j*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
+					concentration[index] =
+						c_[i+j*nodeX+kbis*nodeX*nodeY] +
+						parameters.m * parameters.D * (c_[i+1+j*nodeX+kbis*nodeX*nodeY]+c_[i+(j+1)*nodeX+kbis*nodeX*nodeY]+
+						c_[i+j*nodeX+(kbis+1)*nodeX*nodeY]-6*c_[i+j*nodeX+kbis*nodeX*nodeY]+
+						c_[i-1+j*nodeX+kbis*nodeX*nodeY]+c_[i+(j-1)*nodeX+kbis*nodeX*nodeY]+
+						c_[i+j*nodeX+(kbis-1)*nodeX*nodeY])/pow(parameters.h,2) -
+						parameters.m * parameters.vx * (c_[i+1+j*nodeX+kbis*nodeX*nodeY]-c_[i-1+j*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
+						parameters.m * parameters.vy * (c_[i+(j+1)*nodeX+kbis*nodeX*nodeY]-c_[i+(j-1)*nodeX+kbis*nodeX*nodeY])/(2*parameters.h) -
+						parameters.m * parameters.vz * (c_[i+j*nodeX+(kbis+1)*nodeX*nodeY]-c_[i+j*nodeX+(kbis-1)*nodeX*nodeY])/(2*parameters.h);
 
-				// Check the stopping conditions on the boundaries of the domain
-				if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
-				if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
-				onBoundary = (i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2);
-				if ((onBoundary || onZBoundary)  && (concentration[index] > 5e-8)){
-					valueOnBoundary=true;
-					printf("concentration on boundary = %e at index %zu at iteration %zu\n", concentration[index], index, iteration);
-         			printf("STOP\n");
+					// Check the stopping conditions on the boundaries of the domain
+					if (rank == 0) onZBoundary = (index<2*nodeX*nodeY);
+					if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
+					onBoundary = (i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2);
+					if ((onBoundary || onZBoundary)  && (concentration[index] > 5e-8)){
+						valueOnBoundary=true;
+						printf("concentration on boundary = %e at index %zu at iteration %zu\n", concentration[index], index, iteration);
+	         			printf("STOP\n");
+					}
 				}
 			}
-		}
 
 		// Send your status to all the other nodes
 		for (int i = 0; i < world_size; ++i)

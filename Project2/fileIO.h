@@ -19,9 +19,6 @@ typedef struct Param{
 	unsigned int S;
 } Param;
 
-Param readDat(char *filename);
-
-void writeSequentialFile(double values[], int iteration, int N);
 /* ----------------------------------------------------------------------------*
 * function: readDat
 * -----------------------------------------------------------------------------*
@@ -31,3 +28,7 @@ void writeSequentialFile(double values[], int iteration, int N);
 * Function reading a given dat file and returning a structure containing its
 * data
 * ----------------------------------------------------------------------------*/
+Param readDat(char *filename);
+
+
+void writeSequentialFile(double values[], int iteration, int N);
