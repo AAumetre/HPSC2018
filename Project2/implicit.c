@@ -126,7 +126,8 @@ int implicit_solver(int argc, char *argv[])
 	int numthreads = 1;
 	numthreads = __builtin_omp_get_num_threads();
 
-	while (iteration <= stopTime && !stopFlag)
+	//while (iteration <= stopTime && !stopFlag)
+	while (iteration <= stopTime)
 	{
 		//--------------------------------------------------------------------------
 		//              Conjugate Gradient Method

@@ -127,7 +127,8 @@ int explicit_solver(int argc, char *argv[])
 	================================================================================================*/
 	int numthreads = 1;
 	//if (rank == 0) printf("Iteration: ");
-	while (iteration <= stopTime && !stopFlag)
+	//while (iteration <= stopTime && !stopFlag)
+	while (iteration <= stopTime)
 	{
 		//if (rank == 0) printf("%ld ", iteration);
 		// Search for boundaries
