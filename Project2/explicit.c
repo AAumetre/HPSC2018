@@ -171,8 +171,8 @@ int explicit_solver(int argc, char *argv[])
 					onBoundary = (i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2);
 					if ((onBoundary || onZBoundary)  && (concentration[index] > 5e-8)){
 						valueOnBoundary=true;
-						printf("concentration on boundary = %e at index %zu at iteration %zu\n", concentration[index], index, iteration);
-	         			printf("STOP\n");
+						//printf("concentration on boundary = %e at index %zu at iteration %zu\n", concentration[index], index, iteration);
+	         			//printf("STOP\n");
 					}
 				}
 			}

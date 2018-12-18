@@ -273,8 +273,8 @@ int implicit_solver(int argc, char *argv[])
 			if (rank == world_size-1) onZBoundary = (index>=(thicknessMPI-2)*nodeX*nodeX);
 			if((i<=1 || i >= nodeX-2 || j<=1 || j >= nodeY-2 || onZBoundary) && concentrationSuiv[index]> 5e-8)
 			{
-				printf("concentration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
-				printf("STOP\n");
+				//printf("concentration on boundary = %e at index %zu\n", concentrationSuiv[index], index);
+				//printf("STOP\n");
 				valueOnBoundary = true;
 				break;
 			}
