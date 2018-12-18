@@ -47,7 +47,7 @@ int explicit_solver(int argc, char *argv[])
 	Param parameters = readDat(argv[1]);
 	size_t nodeX = (int)(parameters.L/parameters.h) + 1;
 	size_t nodeY = nodeX, nodeZ =nodeX;
-	size_t stopTime = parameters.Tmax/parameters.m;
+	size_t stopTime = 1000; //parameters.Tmax/parameters.m;
 
 	if (rank == 0)
 	{
